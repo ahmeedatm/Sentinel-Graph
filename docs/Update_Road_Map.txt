@@ -1,0 +1,117 @@
+Il faut le mettre à jour pour un nouveau projet voici le thème : 
+
+2. Observabilité et graphes de comportement avec Tetragon pour des attaques de type zero-day
+Tetragon[1] est un outil open source faisant partie du projet Cilium[2][3]. Il est basé sur eBPF[4][5][6], une technologie extrêmement performante, permettant l'exécution de code directement dans le noyau Linux sans modification du noyau ni chargement de module.
+
+Travail à faire(exclusivement sous environnement Linux):
+1) Faire un état de l'art relatif au sujet étudié
+2) Faire une description technique détaillée et  fonctionnalités et du fonctionnement de Tetragon.
+3) Détailler les outils à utiliser pour générer des graphes de comportement à partir des événements transmis par Tetragon. 
+4) Définir un environnement de travail virtuel utilisant Tetragon associé aux outils décrits en 3)
+5) Identifier des comportements suspects en simulant aussi bien des scénarios normaux que des scénarios d'attaque
+6) Identifier des attaques qui pourraient ne pas être détectées par les outils utilisés
+
+Références:
+[1] https://tetragon.io/
+[2] https://cilium.io/
+[3] Ghane, Dr Mehdi. "Observability Engineering Fundamentals." Observability Engineering with Cilium: Observability Magic in the Cloud-Native Journey with Hubble and Tetragon. Berkeley, CA: Apress, Springer, 2025. 83-147.
+[4] Scholz, Dominik, et al. "Performance implications of packet filtering with linux ebpf." 2018 30th International Teletraffic Congress (ITC 30). Vol. 1. IEEE, 2018.
+[5] Vieira, Marcos AM, et al. "Fast packet processing with ebpf and xdp: Concepts, code, challenges, and applications." ACM Computing Surveys (CSUR) 53.1 (2020): 1-36.
+[6] Gbadamosi, Bolaji, et al. "The eBPF runtime in the linux kernel." arXiv preprint arXiv:2410.00026 (2024).
+
+===================================================================
+
+
+Les étapes clés et rendus : 
+
+2 février après-midi (à distance), séance de démarrage:
+introduction
+présentation des projets
+échanges avec les étudiants
+6 février après-midi (à distance), travail supervisé pour : 
+finaliser le cahier des charges
+préparer le plan de développement
+répartir les tâches pour les groupes
+définir un diagramme de Gantt
+rédiger l'état de l'art
+avant le 23 février : transfert du cahier des charges sur l'espace Moodle du module. Suivre les consignes indiquées dans le template en bas de page
+24 février après-midi, présentation:
+du cahier de charge
+du plan de développement
+du diagramme de Gantt (avec répartition des tâches)
+de l'état de l'art
+10' de présentation par projet, divisées équitablement entre les participants, suivies de questions.
+16 mars (matin), 17 mars (matin) et 18 mars (matin), 19 mars (matin): séances de travail supervisées en présentiel:
+ réunion avec le tuteur pour bien délimiter l’analyse et proposer une première conception
+23 mars(matin), séance de travail supervisée en distanciel
+avant le 24 mars : remise du rapport intermédiaire sur l'espace Moodle du module.
+le rapport intermédiaire doit être structuré comme indiqué dans le template en bas de page
+25 mars (matin) : soutenances (examen oral à mi-parcours):
+30' de présentation par projet, divisées équitablement entre les participants, suivie de questions
+conseils pour la préparation de la soutenance plus bas dans cette page
+Avant la soutenance: transfert de la présentation sur l'espace Moodle du module.
+27 mars (matin), séance de travail supervisée:
+réunion avec le tuteur pour échanger sur la mise en œuvre du projet
+12 avril :
+date limite pour transférer sur l'espace Moodle du module le rapport final ainsi que les fichiers et vidéos pour la démonstration. 
+utiliser les formulaires et liens disponibles dans l'espace Moodle du module
+
+--
+
+Les membres du groupe : Jonathan, Ahmed, Jérémy et Antoine, 
+
+---
+
+Voici le nom du module : 
+
+USRS7N - Présentiel jour : Projets avancés en IoT et cybersécurité (2025 - 2026 Annuel)
+
+
+---
+
+Et on a commencé à faire une petite notion : 
+
+### 1. L'Ingénieur Infrastructure & eBPF (L'Ops) - Antoine
+
+C'est celui qui maîtrise le terrain de jeu (Kubernetes/Docker) et l'outil de collecte.
+
+- **Mission principale :** Mettre en place l'environnement et configurer Tetragon pour qu'il ne soit ni muet, ni trop bavard.
+- **Tâches :**
+    - Déployer un cluster Kubernetes local (Kind ou Minikube).
+    - Installer Tetragon en tant que DaemonSet.
+    - Écrire les **TracingPolicies** (fichiers YAML) pour filtrer les événements (ex: on veut voir les `execve` et les `tcp_connect`, mais pas forcément tous les `read` sur des fichiers logs).
+- **Livrable :** Un flux JSON propre et filtré, accessible par le service Python.
+
+### 2. L'Architecte de Données (Le "Mapper" Python) : Ahmed
+
+C'est celui qui traduit le langage "Système" en langage "Graphe".
+
+- **Mission principale :** Transformer les logs plats de Tetragon en une structure relationnelle.
+- **Tâches :**
+    - Créer le script d'ingestion qui lit le JSON en temps réel.
+    - Modéliser les données avec une librairie comme **NetworkX** (en mémoire) ou une DB comme **Neo4j**.
+    - Définir les nœuds (ex: `Pod`, `Processus`, `Fichier`, `IP Externe`) et les arêtes (ex: `SPAWNS`, `MODIFIES`, `CONNECTS_TO`).
+- **Livrable :** Une classe Python capable de dire : "Voici l'état actuel du système sous forme de graphe".
+
+### 3. Le Développeur Algorithmique (L'Analyste)
+
+C'est le rôle "Cerveau". Il prend le graphe et cherche les problèmes.
+
+- **Mission principale :** Comparer le graphe en temps réel avec un "modèle de référence" (baseline) pour détecter les anomalies.
+- **Tâches :**
+    - Enregistrer une phase d'apprentissage (comportement normal du conteneur).
+    - Développer l'algorithme de détection : "Si le nœud `nginx` crée une arête vers le nœud `/etc/passwd`, ALERTE".
+    - Gérer la persistance des profils de comportement (sauvegarder le graphe "sain" en JSON ou Pickle).
+- **Livrable :** Le moteur de détection qui lève une exception ou une alerte quand le graphe change anormalement.
+
+### 4. Le Red Teamer & Visualiseur (Le QA / Frontend) (Jeremy)
+
+C'est celui qui attaque le système pour prouver qu'il fonctionne, et qui rend les résultats visibles.
+
+- **Mission principale :** Simuler des attaques et fournir une interface pour voir le graphe.
+- **Tâches :**
+    - Développer des scripts d'attaque (ex: *Reverse Shell*, *Privilege Escalation*) à lancer dans les conteneurs surveillés.
+    - Créer une petite visualisation web (avec **Streamlit** ou **Dash** en Python) pour afficher le graphe généré par le collègue n°2.
+    - Vérifier que les attaques du script apparaissent bien en rouge sur le graphe.
+- **Livrable :** Une suite de tests d'intrusion et un Dashboard de visualisation.
+
