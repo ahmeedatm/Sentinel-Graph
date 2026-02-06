@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 
-// ─── CALENDAR (Feb 2 → Mar 27 = 54 days, index 0..53) ───
+// ─── CALENDAR (2 fév → 12 avril = 70 days, index 0..69) ───
 const START = new Date(2026, 1, 2);
-const TOTAL_DAYS = 54;
+const TOTAL_DAYS = 70;
 
 function dayIndex(month, day) {
   const d = new Date(2026, month - 1, day);
@@ -17,445 +17,514 @@ const WEEKS = [
   { label: "Sem 10", start: dayIndex(3,2),  end: dayIndex(3,9) },
   { label: "Sem 11", start: dayIndex(3,9),  end: dayIndex(3,16) },
   { label: "Sem 12", start: dayIndex(3,16), end: dayIndex(3,23) },
-  { label: "Sem 13", start: dayIndex(3,23), end: TOTAL_DAYS },
+  { label: "Sem 13", start: dayIndex(3,23), end: dayIndex(3,30) },
+  { label: "Sem 14", start: dayIndex(3,30), end: dayIndex(4,6) },
+  { label: "Sem 15", start: dayIndex(4,6),  end: TOTAL_DAYS },
 ];
 
 const MONTHS = [
   { label: "FÉVRIER", startDay: 0,               endDay: dayIndex(3,1) },
-  { label: "MARS",    startDay: dayIndex(3,1),   endDay: TOTAL_DAYS },
+  { label: "MARS",    startDay: dayIndex(3,1),   endDay: dayIndex(4,1) },
+  { label: "AVRIL",   startDay: dayIndex(4,1),   endDay: TOTAL_DAYS },
 ];
 
 // ─── MILESTONES ───
 const milestones = [
-  { day: dayIndex(2,2),  label: "2 fév — Séance démarrage",                       type: "session" },
-  { day: dayIndex(2,3),  label: "3 fév — Travail supervisé (CdC / Gantt / Plan)", type: "session" },
-  { day: dayIndex(2,24), label: "24 fév — Présentation CdC + ÉdA",               type: "pres"    },
-  { day: dayIndex(2,26), label: "26 fév — Séance supervisée",                     type: "session" },
-  { day: dayIndex(3,16), label: "16 mar — Séance supervisée",                     type: "session" },
-  { day: dayIndex(3,17), label: "17 mar 18h — Remise rapport intermédiaire",      type: "deadline"},
-  { day: dayIndex(3,19), label: "19 mar — Soutenance mi-parcours",                type: "pres"    },
-  { day: dayIndex(3,20), label: "20 mar — Séance supervisée",                     type: "session" },
-  { day: dayIndex(3,26), label: "26 mar — Envoi rapport final au tuteur",         type: "deadline"},
-  { day: dayIndex(3,27), label: "27 mar — Remise finale (rapport + démo)",        type: "deadline"},
+  { day: dayIndex(2,2),  label: "2 fév (PM) — Séance démarrage à distance",        type: "session" },
+  { day: dayIndex(2,6),  label: "6 fév (PM) — Travail supervisé à distance",       type: "session" },
+  { day: dayIndex(2,23), label: "23 fév — Deadline transfert CdC sur Moodle",      type: "deadline"},
+  { day: dayIndex(2,24), label: "24 fév (PM) — Présentation CdC (10')",            type: "pres"    },
+  { day: dayIndex(3,16), label: "16 mars (AM) — Séance supervisée présentiel",     type: "session" },
+  { day: dayIndex(3,17), label: "17 mars (AM) — Séance supervisée présentiel",     type: "session" },
+  { day: dayIndex(3,18), label: "18 mars (AM) — Séance supervisée présentiel",     type: "session" },
+  { day: dayIndex(3,19), label: "19 mars (AM) — Séance supervisée présentiel",     type: "session" },
+  { day: dayIndex(3,23), label: "23 mars (AM) — Séance supervisée distanciel",     type: "session" },
+  { day: dayIndex(3,24), label: "24 mars — Remise rapport intermédiaire",          type: "deadline"},
+  { day: dayIndex(3,25), label: "25 mars (AM) — Soutenance mi-parcours (30')",     type: "pres"    },
+  { day: dayIndex(3,27), label: "27 mars (AM) — Séance supervisée",                type: "session" },
+  { day: dayIndex(4,12), label: "12 avril — Remise rapport final + démo",          type: "deadline"},
 ];
 
 // ─── TASKS ────────────────────────────────────────────
 const tasks = [
-  // ── JONATHAN - TÂCHE 1: CADRAGE (2-24 fév) ──
+  // ── ANTOINE - Infrastructure & eBPF ──
   {
-    id:"J0a", owner:"Jonathan", phase:"Tâche 1",
-    task:"Séance démarrage — Introduction projet SAFA",
-    desc:"2 fév 10h : Intro protocole SAFA. Contexte détection anomalies 5G/6G. Présentation testbed fladdps_container. Distribution tâches.",
+    id:"An1", owner:"Antoine", phase:"Phase 1: Cadrage",
+    task:"Participation séance de démarrage",
+    desc:"2 fév PM : Présentation projet Tetragon. Compréhension objectifs. Distribution des rôles.",
     start: dayIndex(2,2),  end: dayIndex(2,3),
   },
   {
-    id:"J0b", owner:"Jonathan", phase:"Tâche 1",
-    task:"Travail supervisé — CdC & Gantt avec tuteur",
-    desc:"3 fév 10h : Finaliser CdC avec tuteur. Préparer plan dev. Répartir tâches. Définir diagramme Gantt.",
-    start: dayIndex(2,3),  end: dayIndex(2,4),
+    id:"An2", owner:"Antoine", phase:"Phase 1: Cadrage",
+    task:"État de l'art eBPF & Tetragon",
+    desc:"Lecture articles [4][5][6] sur eBPF. Étude documentation Tetragon et Cilium. Compréhension architecture.",
+    start: dayIndex(2,2),  end: dayIndex(2,16),
   },
   {
-    id:"J1", owner:"Jonathan", phase:"Tâche 1",
-    task:"Étude papiers SAFA + analyse testbed",
-    desc:"Étude Ntumba et al. (CNSM 2024) et Wu et al. (SAFA). Exploration fladdps_container : Docker, code FLAD, réseau, API.",
-    start: dayIndex(2,2),  end: dayIndex(2,15),
+    id:"An3", owner:"Antoine", phase:"Phase 1: Cadrage",
+    task:"Contribution au Cahier des Charges",
+    desc:"Rédaction section infrastructure : déploiement K8s, installation Tetragon, configuration DaemonSet.",
+    start: dayIndex(2,6),  end: dayIndex(2,15),
   },
   {
-    id:"J2", owner:"Jonathan", phase:"Tâche 1",
-    task:"Rédaction Plan de Développement (300-500 mots)",
-    desc:"Description tâches Jonathan : implémentation SAFA, architecture. Intégration avec tâches Antoine. Calendrier cohérent.",
-    start: dayIndex(2,10), end: dayIndex(2,18),
+    id:"An4", owner:"Antoine", phase:"Phase 1: Cadrage",
+    task:"Création diagramme de Gantt",
+    desc:"Planification timeline du projet. Répartition tâches infrastructure. Export PDF professionnel.",
+    start: dayIndex(2,10), end: dayIndex(2,20),
   },
   {
-    id:"J3", owner:"Jonathan", phase:"Tâche 1",
-    task:"Création Diagramme Gantt professionnel",
-    desc:"Création diagramme Gantt React. Export PDF haute qualité. Visualisation séquencement tâches par étudiant.",
-    start: dayIndex(2,9),  end: dayIndex(2,23),
-  },
-  {
-    id:"J4", owner:"Jonathan", phase:"Tâche 1",
-    task:"Préparation présentation 24 fév (Plan Dev + Architecture)",
-    desc:"Slides : plan de développement, architecture technique SAFA. Diagramme Gantt. Répartition 5' Jonathan. Questions anticipées.",
+    id:"An5", owner:"Antoine", phase:"Phase 1: Cadrage",
+    task:"Préparation présentation 24 fév",
+    desc:"Slides architecture infrastructure K8s/Tetragon. Schéma déploiement. 2-3 min de présentation.",
     start: dayIndex(2,18), end: dayIndex(2,24),
   },
   {
-    id:"J5", owner:"Jonathan", phase:"Tâche 1",
-    task:"Présentation 24 fév : Plan Dev + Architecture (5')",
-    desc:"24 fév 10h : Présentation plan de développement et architecture technique SAFA. Slides implémentation. Diagramme Gantt. Répondre questions.",
-    start: dayIndex(2,23), end: dayIndex(2,24),
-  },
-  
-  // ── JONATHAN - TÂCHE 2: CONCEPTION & IMPLÉMENTATION (15 fév - 17 mar) ──
-  {
-    id:"J6", owner:"Jonathan", phase:"Tâche 2",
-    task:"Implémentation protocole SAFA (Python)",
-    desc:"Traduction SAFA : distribution lag-tolerant, sélection clients, agrégation discriminative 3 étapes. Framework FLAD. Tests unitaires.",
-    start: dayIndex(2,15), end: dayIndex(3,12),
-  },
-  {
-    id:"J7", owner:"Jonathan", phase:"Tâche 2",
-    task:"Séance supervisée — Architecture SAFA (26 fév)",
-    desc:"26 fév 10h : Validation choix architecturaux avec tuteur. Clarifier approche implémentation. Délimiter scope.",
-    start: dayIndex(2,25), end: dayIndex(2,26),
-  },
-  {
-    id:"J8", owner:"Jonathan", phase:"Tâche 2",
-    task:"Rédaction Conception technique (1000-1500 mots) [RI]",
-    desc:"Description solution SAFA. Architecture proposée. Choix frameworks/libs (PyTorch, Keras). API développée. Diagrammes technique.",
-    start: dayIndex(2,25), end: dayIndex(3,6),
-  },
-  {
-    id:"J9", owner:"Jonathan", phase:"Tâche 2",
-    task:"Intégration Graphiques & Schémas techniques [RI]",
-    desc:"Diagrammes architecture SAFA. Schémas agrégation. Courbes convergence préliminaires. Illustrations implémentation.",
-    start: dayIndex(2,18), end: dayIndex(3,7),
-  },
-  {
-    id:"J10", owner:"Jonathan", phase:"Tâche 2",
-    task:"Séance supervisée — Validation travail futur (16 mar)",
-    desc:"16 mar : Échanges tuteur validation choix pour travail futur. Ajustements nécessaires avant RI.",
-    start: dayIndex(3,15), end: dayIndex(3,16),
-  },
-  {
-    id:"J11", owner:"Jonathan", phase:"Tâche 2",
-    task:"Finalisation rapport intermédiaire [RI]",
-    desc:"Intégration sections RI : CdC + plan + ÉdA + conception tech + graphiques. Relecture. Mise en page professionnelle.",
-    start: dayIndex(3,1),  end: dayIndex(3,7),
-  },
-  {
-    id:"J12", owner:"Jonathan", phase:"Tâche 2",
-    task:"Transfert RI sur Moodle (avant 17 mars 18h)",
-    desc:"Upload rapport intermédiaire finalisé PDF avant 17 mar 18h00 strict. Structuration conforme template officiel.",
-    start: dayIndex(3,6),  end: dayIndex(3,7),
-  },
-  {
-    id:"J13", owner:"Jonathan", phase:"Tâche 2",
-    task:"Préparation présentation mi-parcours (19 mar)",
-    desc:"Slides synthèse : contexte SAFA, implémentation actualisée, architecture choisie, résultats préliminaires. Démo code. 15' Jonathan.",
-    start: dayIndex(3,8),  end: dayIndex(3,14),
-  },
-  {
-    id:"J14", owner:"Jonathan", phase:"Tâche 2",
-    task:"Soutenance mi-parcours 19 mar (15' présentation)",
-    desc:"19 mar 14h : Présentation 15' Jonathan (tech + implémentation). Questions jury sur architecture. Conseils améliorations code.",
-    start: dayIndex(3,19), end: dayIndex(3,20),
-  },
-  
-  // ── JONATHAN - TÂCHE 3: EXPÉRIMENTATION & VALIDATION (6-23 mar) ──
-  {
-    id:"J15", owner:"Jonathan", phase:"Tâche 3",
-    task:"Tests & Validation SAFA mode isolé",
-    desc:"Vérification convergence modèle, gestion stragglers, cache pré-agrégation. Comparaison vs FedAvg sync. Métriques de perf.",
-    start: dayIndex(3,6),  end: dayIndex(3,17),
-  },
-  {
-    id:"J16", owner:"Jonathan", phase:"Tâche 3",
-    task:"Séance supervisée — Tests code & validation métriques (20 mar)",
-    desc:"20 mar 14h : Tester code en direct avec tuteur. Validation performances vs attentes SAFA. Vérification métriques.",
-    start: dayIndex(3,20), end: dayIndex(3,21),
-  },
-  {
-    id:"J17", owner:"Jonathan", phase:"Tâche 3",
-    task:"Préparation Visualisations professionnelles",
-    desc:"Création graphiques comparatifs. Courbes d'apprentissage. Collaboration avec Antoine sur vidéo démo.",
-    start: dayIndex(3,19), end: dayIndex(3,23),
-  },
-  {
-    id:"J18", owner:"Jonathan", phase:"Tâche 3",
-    task:"Rédaction Compte rendu (1500-2500 mots) - partie Jonathan",
-    desc:"Déroulement implémentation : défis rencontrés, solutions. Résultats vs planning. Validation SAFA vs FedAvg. Enseignements code.",
-    start: dayIndex(3,17), end: dayIndex(3,23),
-  },
-  
-  // ── JONATHAN - TÂCHE 4: FINALISATION & REMISE (12-27 mar) ──
-  {
-    id:"J19", owner:"Jonathan", phase:"Tâche 4",
-    task:"Mise à jour Conception avec résultats finaux",
-    desc:"Actualisation section Conception basée sur résultats expérimentaux. Affinage architecture finalisée.",
-    start: dayIndex(3,12), end: dayIndex(3,20),
-  },
-  {
-    id:"J20", owner:"Jonathan", phase:"Tâche 4",
-    task:"Rédaction Conception réalisée (1000-1500 mots) [RF]",
-    desc:"Description solution SAFA finalisée. Implémentation réelle vs proposée. Choix architecturaux justifiés. Code commenté.",
-    start: dayIndex(3,15), end: dayIndex(3,22),
-  },
-  {
-    id:"J21", owner:"Jonathan", phase:"Tâche 4",
-    task:"Préparation Annexes techniques [RF]",
-    desc:"Extraits code commentés (agrégation, clients, sélection). Manuels installation & déploiement. Procédures test. Guide développeur.",
-    start: dayIndex(3,18), end: dayIndex(3,26),
-  },
-  {
-    id:"J22", owner:"Jonathan", phase:"Tâche 4",
-    task:"Révision rapport final par tuteur (avant 26 mar)",
-    desc:"26 mar 23h59 : Envoi version RF au tuteur pour révision. Récupérer retours. Corrections prioritaires avant 27 mar 23h59.",
-    start: dayIndex(3,23), end: dayIndex(3,26),
-  },
-  {
-    id:"J23", owner:"Jonathan", phase:"Tâche 4",
-    task:"Travail autonome & séances tuteur (23-26 mar)",
-    desc:"23-26 mar (après-midi) : Travail autonome finalisation code. Échanges salle avec tuteur. Intégration retours. Tests dernière heure.",
-    start: dayIndex(3,23), end: dayIndex(3,26),
-  },
-  {
-    id:"J24", owner:"Jonathan", phase:"Tâche 4",
-    task:"Transfert rapport final + démo (avant 27 mar 23h)",
-    desc:"27 mar 23h59 : Upload Moodle rapport final PDF + vidéo démo code SAFA + fichiers source. Utiliser formulaires Moodle officiel.",
-    start: dayIndex(3,26), end: dayIndex(3,27),
-  },
-  
-  // ── ANTOINE - TÂCHE 1: CADRAGE (2-24 fév) ──
-  {
-    id:"A0a", owner:"Antoine", phase:"Tâche 1",
-    task:"Séance démarrage — Introduction projet SAFA",
-    desc:"2 fév 10h : Intro SAFA. Contexte testbed. Présentation métriques (F1, MSE, Tk). Attribution tâches test/validation.",
-    start: dayIndex(2,2),  end: dayIndex(2,3),
-  },
-  {
-    id:"A0b", owner:"Antoine", phase:"Tâche 1",
-    task:"Travail supervisé — Finalisation CdC",
-    desc:"3 fév 10h : Finaliser CdC avec tuteur. Définir objectifs. Répartir tâches test. Coordonner avec Jonathan.",
-    start: dayIndex(2,3),  end: dayIndex(2,4),
-  },
-  {
-    id:"A1", owner:"Antoine", phase:"Tâche 1",
-    task:"Étude papiers SAFA + analyse testbed",
-    desc:"Étude Ntumba et al. (CNSM 2024) et Wu et al. (SAFA). Exploration fladdps_container : Docker, code FLAD, réseau, API.",
-    start: dayIndex(2,2),  end: dayIndex(2,15),
-  },
-  {
-    id:"A2", owner:"Antoine", phase:"Tâche 1",
-    task:"Rédaction Cahier des Charges (200-400 mots)",
-    desc:"Paragraphe intro contexte. Paragraphe objectif détection anomalies réseau. 1-3 paragraphes tâches de test/validation.",
-    start: dayIndex(2,4),  end: dayIndex(2,10),
-  },
-  {
-    id:"A3", owner:"Antoine", phase:"Tâche 1",
-    task:"Rédaction État de l'art (1500-2000 mots)",
-    desc:"ML Fédéré, anomalies 5G/6G, DPS, FLAD. Bibliographie : 1/3 scientifique (Scholar), 2/3 technique. Références complètes.",
-    start: dayIndex(2,3), end: dayIndex(2,22),
-  },
-  {
-    id:"A4", owner:"Antoine", phase:"Tâche 1",
-    task:"Transfert CdC sur Moodle (avant 24 fév)",
-    desc:"Upload Cahier des Charges finalisé sur Moodle. Vérifier format PDF et conformité template. Respecter template officiel.",
-    start: dayIndex(2,22), end: dayIndex(2,24),
-  },
-  {
-    id:"A5", owner:"Antoine", phase:"Tâche 1",
-    task:"Préparation présentation 24 fév (CdC + ÉdA)",
-    desc:"Slides État de l'art détaillé. Contexte ML fédéré, anomalies 5G/6G. Bibliographie. Contexte testbed. Répartition 5' Antoine.",
-    start: dayIndex(2,18), end: dayIndex(2,24),
-  },
-  {
-    id:"A6", owner:"Antoine", phase:"Tâche 1",
-    task:"Présentation 24 fév : CdC + ÉdA (5')",
-    desc:"24 fév 10h : Présentation CdC et état de l'art détaillé. Contexte testbed. Bibliographie. Questions. Timing strict 5' Antoine.",
+    id:"An6", owner:"Antoine", phase:"Phase 1: Cadrage",
+    task:"Présentation CdC 24 fév (2-3')",
+    desc:"24 fév PM : Présentation architecture infrastructure. Déploiement Tetragon. Réponse aux questions.",
     start: dayIndex(2,24), end: dayIndex(2,25),
   },
   
-  // ── ANTOINE - TÂCHE 2: CONCEPTION & IMPLÉMENTATION (15 fév - 17 mar) ──
   {
-    id:"A7", owner:"Antoine", phase:"Tâche 2",
-    task:"Setup testbed & pipeline DPS",
-    desc:"Émulation délais réseau (front/back-hauling). Injection anomalies contrôlées. Intégration DPS avec FLAD temps réel.",
-    start: dayIndex(2,15), end: dayIndex(3,9),
-  },
-  {
-    id:"A8", owner:"Antoine", phase:"Tâche 2",
-    task:"Séance supervisée — Validation travail futur (26 fév)",
-    desc:"26 fév 10h : Validation approche testbed avec tuteur. Proposer première conception. Valider choix pour travail futur.",
-    start: dayIndex(2,26), end: dayIndex(2,27),
-  },
-  {
-    id:"A9", owner:"Antoine", phase:"Tâche 2",
-    task:"Rédaction Analyse (1000-1500 mots) [RI]",
-    desc:"Besoins testbed. Description détaillée émulation réseau (delays, anomalies). Problèmes métriques & collecte données.",
+    id:"An7", owner:"Antoine", phase:"Phase 2: Implémentation",
+    task:"Setup environnement Kubernetes local",
+    desc:"Installation Kind ou Minikube. Configuration cluster local. Tests connectivité pods.",
     start: dayIndex(2,20), end: dayIndex(3,2),
   },
   {
-    id:"A10", owner:"Antoine", phase:"Tâche 2",
-    task:"Rédaction Conception technique (1000-1500 mots) [RI]",
-    desc:"Architecture testbed. Pipeline DPS (iNDBF→NDPPF→eNDBF). Intégration FLAD. Outils : Docker, monitoring, logs.",
-    start: dayIndex(2,25), end: dayIndex(3,6),
+    id:"An8", owner:"Antoine", phase:"Phase 2: Implémentation",
+    task:"Installation Tetragon en DaemonSet",
+    desc:"Déploiement Tetragon sur cluster. Configuration collect d'événements. Vérification logs.",
+    start: dayIndex(3,1),  end: dayIndex(3,8),
   },
   {
-    id:"A11", owner:"Antoine", phase:"Tâche 2",
-    task:"Intégration Graphiques testbed [RI]",
-    desc:"Diagrammes architecture (Docker, réseau). Courbes émulation. Captures interface de monitoring. Schémas pipeline DPS.",
-    start: dayIndex(2,18), end: dayIndex(3,7),
+    id:"An9", owner:"Antoine", phase:"Phase 2: Implémentation",
+    task:"Écriture TracingPolicies YAML",
+    desc:"Création policies pour execve, tcp_connect, file operations. Filtrage événements pertinents.",
+    start: dayIndex(3,5),  end: dayIndex(3,15),
   },
   {
-    id:"A12", owner:"Antoine", phase:"Tâche 2",
-    task:"Séance supervisée — Validation travail futur (16 mar)",
-    desc:"16 mar : Échanges tuteur validation choix pour travail futur. Ajustements nécessaires avant RI.",
-    start: dayIndex(3,16), end: dayIndex(3,17),
+    id:"An10", owner:"Antoine", phase:"Phase 2: Implémentation",
+    task:"Optimisation flux JSON",
+    desc:"Configuration output JSON propre. Filtrage bruit. Export vers service Python d'Ahmed.",
+    start: dayIndex(3,12), end: dayIndex(3,20),
   },
   {
-    id:"A13", owner:"Antoine", phase:"Tâche 2",
-    task:"Finalisation rapport intermédiaire [RI]",
-    desc:"Intégration sections RI : CdC + plan + ÉdA + analyse + conception + graphiques. Relecture. Mise en page.",
-    start: dayIndex(3,1),  end: dayIndex(3,7),
+    id:"An11", owner:"Antoine", phase:"Phase 2: Implémentation",
+    task:"Rédaction conception technique [RI]",
+    desc:"Documentation architecture déployée. Choix techniques justifiés. Diagrammes infrastructure.",
+    start: dayIndex(3,10), end: dayIndex(3,22),
   },
   {
-    id:"A14", owner:"Antoine", phase:"Tâche 2",
-    task:"Transfert RI sur Moodle (avant 17 mars 18h)",
-    desc:"Upload rapport intermédiaire finalisé PDF avant 17 mar 18h00 strict. Structuration conforme template. Tous liens OK.",
-    start: dayIndex(3,6),  end: dayIndex(3,7),
+    id:"An12", owner:"Antoine", phase:"Phase 2: Implémentation",
+    task:"Préparation soutenance mi-parcours",
+    desc:"Slides démo infrastructure. Captures logs Tetragon. Présentation TracingPolicies. 7-8 min.",
+    start: dayIndex(3,18), end: dayIndex(3,24),
   },
   {
-    id:"A15", owner:"Antoine", phase:"Tâche 2",
-    task:"Préparation présentation mi-parcours (19 mar)",
-    desc:"Slides synthèse : contexte testbed, ÉdA détaillé, analyse besoins, conception DPS+FLAD. Démo monitoring. 15' Antoine.",
-    start: dayIndex(3,8),  end: dayIndex(3,14),
-  },
-  {
-    id:"A16", owner:"Antoine", phase:"Tâche 2",
-    task:"Transfert présentation sur Moodle (avant 19 mar)",
-    desc:"Upload slides/vidéo présentation mi-parcours. Format PDF + éventuellement MP4. Avant soutenance 19 mar.",
-    start: dayIndex(3,14), end: dayIndex(3,19),
-  },
-  {
-    id:"A17", owner:"Antoine", phase:"Tâche 2",
-    task:"Soutenance mi-parcours 19 mar (15' présentation)",
-    desc:"19 mar 14h : Présentation 15' Antoine + 15' Jonathan. Questions jury 15'. Évaluation intermédiaire. Retours jury.",
-    start: dayIndex(3,19), end: dayIndex(3,20)
+    id:"An13", owner:"Antoine", phase:"Phase 2: Implémentation",
+    task:"Soutenance 25 mars (7-8')",
+    desc:"25 mars AM : Présentation infrastructure déployée. Démo Tetragon live. Réponse questions jury.",
+    start: dayIndex(3,25), end: dayIndex(3,26),
   },
   
-  // ── ANTOINE - TÂCHE 3: EXPÉRIMENTATION & VALIDATION (6-23 mar) ──
   {
-    id:"A18", owner:"Antoine", phase:"Tâche 3",
-    task:"Campagne expérimentations complète",
-    desc:"Scénarios systématiques SAFA vs FedAvg sync. Mesure Tk, qualité modèle par version, taux obsolescence. Courbes temps réel.",
-    start: dayIndex(3,9),  end: dayIndex(3,23),
+    id:"An14", owner:"Antoine", phase:"Phase 3: Tests & Validation",
+    task:"Tests de charge infrastructure",
+    desc:"Vérification stabilité K8s sous charge. Monitoring ressources. Optimisation performances.",
+    start: dayIndex(3,20), end: dayIndex(3,30),
   },
   {
-    id:"A19", owner:"Antoine", phase:"Tâche 3",
-    task:"Séance supervisée — Tests code & validation métriques (20 mar)",
-    desc:"20 mar 14h : Tester campagne avec tuteur. Valider stabilité métriques. Vérification résultats cohérents.",
-    start: dayIndex(3,20), end: dayIndex(3,21),
+    id:"An15", owner:"Antoine", phase:"Phase 3: Tests & Validation",
+    task:"Validation intégration avec pipeline Python",
+    desc:"Tests bout-en-bout avec script Ahmed. Vérification flux données. Debugging connectivité.",
+    start: dayIndex(3,25), end: dayIndex(4,3),
   },
   {
-    id:"A20", owner:"Antoine", phase:"Tâche 3",
-    task:"Préparation Visualisations professionnelles",
-    desc:"Graphiques comparatifs (F1, MSE, Tk). Courbes temps réel. Collaboration avec Jonathan sur vidéo démo testbed.",
-    start: dayIndex(3,19), end: dayIndex(3,23),
+    id:"An16", owner:"Antoine", phase:"Phase 3: Tests & Validation",
+    task:"Documentation déploiement",
+    desc:"Guide installation pas-à-pas. Scripts automatisation. Procédures troubleshooting.",
+    start: dayIndex(3,27), end: dayIndex(4,8),
   },
   {
-    id:"A21", owner:"Antoine", phase:"Tâche 3",
-    task:"Rédaction Compte rendu (1500-2500 mots) - partie Antoine",
-    desc:"Campagne expérimentations : scénarios SAFA vs FedAvg. Résultats Tk, F1-score, MSE. Analyse comparative détaillée. Défis rencontrés.",
-    start: dayIndex(3,17), end: dayIndex(3,23),
-  },
-  
-  // ── ANTOINE - TÂCHE 4: FINALISATION & REMISE (12-27 mar) ──
-  {
-    id:"A22", owner:"Antoine", phase:"Tâche 4",
-    task:"Mise à jour ÉdA avec résultats finaux",
-    desc:"Actualisation État de l'art basée résultats expérimentaux. Affinage classification anomalies. Références nouvelles publiées.",
-    start: dayIndex(3,12),  end: dayIndex(3,18),
+    id:"An17", owner:"Antoine", phase:"Phase 3: Tests & Validation",
+    task:"Rédaction rapport final - partie infra",
+    desc:"Compte-rendu déploiement. Résultats tests performance. Leçons apprises. Améliorations futures.",
+    start: dayIndex(4,1),  end: dayIndex(4,10),
   },
   {
-    id:"A23", owner:"Antoine", phase:"Tâche 4",
-    task:"Mise à jour Analyse avec résultats finaux",
-    desc:"Problèmes réels identifiés durant campagne. Solutions apportées. Impact sur résultats. Limitations testbed.",
-    start: dayIndex(3,12),  end: dayIndex(3,20),
+    id:"An18", owner:"Antoine", phase:"Phase 3: Tests & Validation",
+    task:"Finalisation livrables + remise 12 avril",
+    desc:"12 avril : Upload Moodle rapport final + scripts déploiement + vidéo démo infrastructure.",
+    start: dayIndex(4,10), end: dayIndex(4,12),
+  },
+
+  // ── AHMED - Architecte de Données (Python/Graphes) ──
+  {
+    id:"Ah1", owner:"Ahmed", phase:"Phase 1: Cadrage",
+    task:"Participation séance de démarrage",
+    desc:"2 fév PM : Compréhension objectifs mapping graphes. Distribution rôles.",
+    start: dayIndex(2,2),  end: dayIndex(2,3),
   },
   {
-    id:"A24", owner:"Antoine", phase:"Tâche 4",
-    task:"Rédaction Conception réalisée (1000-1500 mots) [RF]",
-    desc:"Testbed finalisé vs proposé. Résultats émulation. Stabilité métriques. Configuration finale DPS+FLAD. Comparaison vs conception initiale.",
-    start: dayIndex(3,15), end: dayIndex(3,22),
+    id:"Ah2", owner:"Ahmed", phase:"Phase 1: Cadrage",
+    task:"État de l'art graphes & observabilité",
+    desc:"Étude NetworkX, Neo4j. Lectures sur graph-based security. Modélisation comportements systèmes.",
+    start: dayIndex(2,2),  end: dayIndex(2,16),
   },
   {
-    id:"A25", owner:"Antoine", phase:"Tâche 4",
-    task:"Préparation Annexes techniques [RF]",
-    desc:"Scripts testbed. Config Docker/DPS. Logs expérimentations. Données brutes résultats. Procédures reproductibilité.",
-    start: dayIndex(3,18), end: dayIndex(3,26),
+    id:"Ah3", owner:"Ahmed", phase:"Phase 1: Cadrage",
+    task:"Contribution CdC - section graphes",
+    desc:"Rédaction section modélisation données. Définition nœuds/arêtes. Architecture pipeline ingestion.",
+    start: dayIndex(2,6),  end: dayIndex(2,15),
   },
   {
-    id:"A26", owner:"Antoine", phase:"Tâche 4",
-    task:"Révision rapport final par tuteur (avant 26 mar)",
-    desc:"26 mar 23h59 : Envoi version RF + livrables au tuteur pour révision. Récupérer retours. Corrections rapides.",
-    start: dayIndex(3,23), end: dayIndex(3,26),
+    id:"Ah4", owner:"Ahmed", phase:"Phase 1: Cadrage",
+    task:"Préparation présentation 24 fév",
+    desc:"Slides architecture données. Schéma modèle graphe. Exemples nœuds/relations. 2-3 min.",
+    start: dayIndex(2,18), end: dayIndex(2,24),
   },
   {
-    id:"A27", owner:"Antoine", phase:"Tâche 4",
-    task:"Travail autonome & séances tuteur (23-26 mar)",
-    desc:"23-26 mar (après-midi) : Échanges salle avec tuteur. Travail autonome finalisation. Intégration retours. Tests finaux.",
-    start: dayIndex(3,23), end: dayIndex(3,26),
-  },
-  {
-    id:"A28", owner:"Antoine", phase:"Tâche 4",
-    task:"Transfert rapport final + démo (avant 27 mar 23h)",
-    desc:"27 mar 23h59 : Upload Moodle rapport final PDF + vidéo démo testbed + fichiers code. Formulaires Moodle officiel.",
-    start: dayIndex(3,26), end: dayIndex(3,27),
+    id:"Ah5", owner:"Ahmed", phase:"Phase 1: Cadrage",
+    task:"Présentation CdC 24 fév (2-3')",
+    desc:"24 fév PM : Présentation modèle de données graphe. Architecture ingestion. Questions.",
+    start: dayIndex(2,24), end: dayIndex(2,25),
   },
   
-  // ── TUTEUR - COORDINATION (suivi hebdomadaire) ──
   {
-    id:"T1", owner:"Tuteur", phase:"Coordination",
-    task:"Check-in hebdomadaire (Semaine 6 - ven 7 fév)",
-    desc:"7 fév 18h : Mail bilan séances démarrage et travail supervisé. État CdC, plan dev, ÉdA. Blocages? Ajustements? Validation timeline.",
-    start: dayIndex(2,7),  end: dayIndex(2,8),
+    id:"Ah6", owner:"Ahmed", phase:"Phase 2: Implémentation",
+    task:"Développement script ingestion JSON",
+    desc:"Création parser logs Tetragon. Lecture temps réel. Extraction événements pertinents.",
+    start: dayIndex(2,20), end: dayIndex(3,5),
   },
   {
-    id:"T2", owner:"Tuteur", phase:"Coordination",
-    task:"Check-in hebdomadaire (Semaine 7 - ven 14 fév)",
-    desc:"14 fév 18h : Mail bilan avancement rédaction CdC/plan/ÉdA. Préparation présentation 24 fév. Points d'attention.",
-    start: dayIndex(2,14), end: dayIndex(2,15),
+    id:"Ah7", owner:"Ahmed", phase:"Phase 2: Implémentation",
+    task:"Modélisation avec NetworkX",
+    desc:"Implémentation classes nœuds (Pod, Process, File, IP). Création arêtes (SPAWNS, CONNECTS_TO, MODIFIES).",
+    start: dayIndex(3,1),  end: dayIndex(3,12),
   },
   {
-    id:"T3", owner:"Tuteur", phase:"Coordination",
-    task:"Check-in hebdomadaire (Semaine 8 - ven 21 fév)",
-    desc:"21 fév 18h : Mail bilan après présentation 24 fév. Feedback jury. Ajustements avant rapport intermédiaire.",
-    start: dayIndex(2,21), end: dayIndex(2,22),
+    id:"Ah8", owner:"Ahmed", phase:"Phase 2: Implémentation",
+    task:"API Python pour requêtes graphe",
+    desc:"Développement API : get_graph_state(), find_neighbors(), query_paths(). Tests unitaires.",
+    start: dayIndex(3,8),  end: dayIndex(3,18),
   },
   {
-    id:"T4", owner:"Tuteur", phase:"Coordination",
-    task:"Check-in hebdomadaire (Semaine 9 - ven 28 fév)",
-    desc:"28 fév 18h : Mail bilan travail supervisé (26 fév). État avancement rapport intermédiaire. Blocages? Démarche souhaitée.",
-    start: dayIndex(2,28), end: dayIndex(3,1),
+    id:"Ah9", owner:"Ahmed", phase:"Phase 2: Implémentation",
+    task:"Intégration avec flux Tetragon (Antoine)",
+    desc:"Connection au flux JSON d'Antoine. Tests bout-en-bout. Debugging format données.",
+    start: dayIndex(3,12), end: dayIndex(3,20),
   },
   {
-    id:"T5", owner:"Tuteur", phase:"Coordination",
-    task:"Check-in hebdomadaire (Semaine 10 - ven 7 mar)",
-    desc:"7 mar 18h : Mail bilan RI finalisé (17 mar 18h). Retours tuteur avant soutenance 19 mar. Validation contenu.",
-    start: dayIndex(3,7),  end: dayIndex(3,8),
+    id:"Ah10", owner:"Ahmed", phase:"Phase 2: Implémentation",
+    task:"Rédaction conception technique [RI]",
+    desc:"Documentation architecture pipeline. Modèle données détaillé. Choix NetworkX vs Neo4j justifiés.",
+    start: dayIndex(3,10), end: dayIndex(3,22),
   },
   {
-    id:"T6", owner:"Tuteur", phase:"Coordination",
-    task:"Check-in hebdomadaire (Semaine 11 - ven 14 mar)",
-    desc:"14 mar 18h : Mail bilan préparation soutenance (19 mar). Retours slides. Questions attendues. Coaching présentation.",
-    start: dayIndex(3,14), end: dayIndex(3,15),
+    id:"Ah11", owner:"Ahmed", phase:"Phase 2: Implémentation",
+    task:"Préparation soutenance mi-parcours",
+    desc:"Slides démo pipeline ingestion. Visualisation graphe exemple. Code samples. 7-8 min.",
+    start: dayIndex(3,18), end: dayIndex(3,24),
   },
   {
-    id:"T7", owner:"Tuteur", phase:"Coordination",
-    task:"Check-in hebdomadaire (Semaine 12 - ven 21 mar)",
-    desc:"21 mar 18h : Mail bilan après soutenance 19 mar. Retours jury. Ajustements rapport final (RF). Prochaines étapes claires.",
-    start: dayIndex(3,21), end: dayIndex(3,22),
+    id:"Ah12", owner:"Ahmed", phase:"Phase 2: Implémentation",
+    task:"Soutenance 25 mars (7-8')",
+    desc:"25 mars AM : Présentation pipeline données. Démo graphe live. Questions jury.",
+    start: dayIndex(3,25), end: dayIndex(3,26),
+  },
+  
+  {
+    id:"Ah13", owner:"Ahmed", phase:"Phase 3: Tests & Validation",
+    task:"Optimisation performances graphes",
+    desc:"Profiling mémoire. Optimisation requêtes. Gestion graphes large échelle. Benchmarks.",
+    start: dayIndex(3,20), end: dayIndex(4,2),
   },
   {
-    id:"T8", owner:"Tuteur", phase:"Coordination",
-    task:"Check-in hebdomadaire (Semaine 13 - ven 28 mar)",
-    desc:"28 mar 18h : Mail bilan final. État RF et livrables. Vérification avant remise 27 mar 23h59. Derniers ajustements.",
-    start: dayIndex(3,28), end: dayIndex(3,29),
+    id:"Ah14", owner:"Ahmed", phase:"Phase 3: Tests & Validation",
+    task:"Intégration avec moteur détection (Jonathan)",
+    desc:"Export format graphe pour analyse anomalies. API commune. Tests intégration.",
+    start: dayIndex(3,25), end: dayIndex(4,5),
+  },
+  {
+    id:"Ah15", owner:"Ahmed", phase:"Phase 3: Tests & Validation",
+    task:"Tests robustesse & edge cases",
+    desc:"Tests données corrompues. Gestion événements manquants. Récupération erreurs.",
+    start: dayIndex(3,27), end: dayIndex(4,6),
+  },
+  {
+    id:"Ah16", owner:"Ahmed", phase:"Phase 3: Tests & Validation",
+    task:"Documentation API Python",
+    desc:"Docstrings complètes. Guide utilisation API. Exemples d'usage. README développeur.",
+    start: dayIndex(4,1),  end: dayIndex(4,8),
+  },
+  {
+    id:"Ah17", owner:"Ahmed", phase:"Phase 3: Tests & Validation",
+    task:"Rédaction rapport final - partie données",
+    desc:"Architecture pipeline finalisée. Résultats benchmarks. Défis rencontrés. Solutions apportées.",
+    start: dayIndex(4,2),  end: dayIndex(4,10),
+  },
+  {
+    id:"Ah18", owner:"Ahmed", phase:"Phase 3: Tests & Validation",
+    task:"Finalisation livrables + remise 12 avril",
+    desc:"12 avril : Upload code Python + tests + documentation API + vidéo démo pipeline.",
+    start: dayIndex(4,10), end: dayIndex(4,12),
+  },
+
+  // ── JÉRÉMY - Red Team & Visualisation ──
+  {
+    id:"J1", owner:"Jérémy", phase:"Phase 1: Cadrage",
+    task:"Participation séance de démarrage",
+    desc:"2 fév PM : Compréhension objectifs Red Team. Distribution rôles sécurité.",
+    start: dayIndex(2,2),  end: dayIndex(2,3),
+  },
+  {
+    id:"J2", owner:"Jérémy", phase:"Phase 1: Cadrage",
+    task:"État de l'art attaques conteneurs",
+    desc:"Étude MITRE ATT&CK containers. Techniques escape, privilege escalation. CVEs récents.",
+    start: dayIndex(2,2),  end: dayIndex(2,16),
+  },
+  {
+    id:"J3", owner:"Jérémy", phase:"Phase 1: Cadrage",
+    task:"Contribution CdC - scénarios d'attaque",
+    desc:"Définition scénarios tests : reverse shell, privesc, data exfiltration. Métriques succès.",
+    start: dayIndex(2,6),  end: dayIndex(2,15),
+  },
+  {
+    id:"J4", owner:"Jérémy", phase:"Phase 1: Cadrage",
+    task:"Préparation présentation 24 fév",
+    desc:"Slides scénarios attaque planifiés. Architecture visualisation. Outils (Streamlit/Dash). 2-3 min.",
+    start: dayIndex(2,18), end: dayIndex(2,24),
+  },
+  {
+    id:"J5", owner:"Jérémy", phase:"Phase 1: Cadrage",
+    task:"Présentation CdC 24 fév (2-3')",
+    desc:"24 fév PM : Présentation approche Red Team. Scénarios d'attaque. Dashboard visualisation.",
+    start: dayIndex(2,24), end: dayIndex(2,25),
+  },
+  
+  {
+    id:"J6", owner:"Jérémy", phase:"Phase 2: Implémentation",
+    task:"Développement scripts d'attaque",
+    desc:"Création exploits : reverse shell, container escape, privilege escalation. Tests isolation.",
+    start: dayIndex(2,20), end: dayIndex(3,10),
+  },
+  {
+    id:"J7", owner:"Jérémy", phase:"Phase 2: Implémentation",
+    task:"Prototype dashboard Streamlit",
+    desc:"Interface visualisation graphes temps réel. Intégration API Ahmed. Affichage événements suspects.",
+    start: dayIndex(3,1),  end: dayIndex(3,15),
+  },
+  {
+    id:"J8", owner:"Jérémy", phase:"Phase 2: Implémentation",
+    task:"Intégration visualisation graphes",
+    desc:"Affichage graphes NetworkX dans Streamlit. Coloration nœuds suspects (rouge). Navigation interactive.",
+    start: dayIndex(3,10), end: dayIndex(3,20),
+  },
+  {
+    id:"J9", owner:"Jérémy", phase:"Phase 2: Implémentation",
+    task:"Tests initiaux attaques sur testbed",
+    desc:"Exécution scripts d'attaque sur env d'Antoine. Vérification détection. Collecte résultats.",
+    start: dayIndex(3,15), end: dayIndex(3,23),
+  },
+  {
+    id:"J10", owner:"Jérémy", phase:"Phase 2: Implémentation",
+    task:"Rédaction conception technique [RI]",
+    desc:"Documentation suite de tests. Architecture dashboard. Scénarios d'attaque détaillés.",
+    start: dayIndex(3,10), end: dayIndex(3,22),
+  },
+  {
+    id:"J11", owner:"Jérémy", phase:"Phase 2: Implémentation",
+    task:"Préparation soutenance mi-parcours",
+    desc:"Slides démo attaques. Captures dashboard. Vidéo reverse shell détecté en temps réel. 7-8 min.",
+    start: dayIndex(3,18), end: dayIndex(3,24),
+  },
+  {
+    id:"J12", owner:"Jérémy", phase:"Phase 2: Implémentation",
+    task:"Soutenance 25 mars (7-8')",
+    desc:"25 mars AM : Présentation Red Team + dashboard. Démo attaque live. Questions jury.",
+    start: dayIndex(3,25), end: dayIndex(3,26),
+  },
+  
+  {
+    id:"J13", owner:"Jérémy", phase:"Phase 3: Tests & Validation",
+    task:"Campagne complète tests d'intrusion",
+    desc:"Exécution systématique tous scénarios. Mesure taux détection. Identification faux positifs/négatifs.",
+    start: dayIndex(3,20), end: dayIndex(4,5),
+  },
+  {
+    id:"J14", owner:"Jérémy", phase:"Phase 3: Tests & Validation",
+    task:"Amélioration dashboard final",
+    desc:"Ajout alertes temps réel. Graphiques statistiques détection. Export rapports PDF.",
+    start: dayIndex(3,25), end: dayIndex(4,6),
+  },
+  {
+    id:"J15", owner:"Jérémy", phase:"Phase 3: Tests & Validation",
+    task:"Documentation suite de tests",
+    desc:"Guide reproduction attaques. Procédures test. Résultats attendus vs obtenus.",
+    start: dayIndex(3,27), end: dayIndex(4,8),
+  },
+  {
+    id:"J16", owner:"Jérémy", phase:"Phase 3: Tests & Validation",
+    task:"Rédaction rapport final - partie Red Team",
+    desc:"Campagne tests détaillée. Résultats détection par type d'attaque. Recommandations amélioration.",
+    start: dayIndex(4,2),  end: dayIndex(4,10),
+  },
+  {
+    id:"J17", owner:"Jérémy", phase:"Phase 3: Tests & Validation",
+    task:"Finalisation livrables + remise 12 avril",
+    desc:"12 avril : Upload scripts attaque + dashboard + vidéo démos + rapport tests.",
+    start: dayIndex(4,10), end: dayIndex(4,12),
+  },
+
+  // ── JONATHAN - Chef de Projet & Détection Algorithmique ──
+  {
+    id:"Jo1", owner:"Jonathan", phase:"Phase 1: Cadrage",
+    task:"Coordination séance de démarrage",
+    desc:"2 fév PM : Animation séance. Présentation vision projet. Répartition rôles finalisée.",
+    start: dayIndex(2,2),  end: dayIndex(2,3),
+  },
+  {
+    id:"Jo2", owner:"Jonathan", phase:"Phase 1: Cadrage",
+    task:"Coordination travail supervisé 6 fév",
+    desc:"6 fév PM : Finalisation CdC. Plan développement. Diagramme Gantt. Coordination équipe.",
+    start: dayIndex(2,6),  end: dayIndex(2,7),
+  },
+  {
+    id:"Jo3", owner:"Jonathan", phase:"Phase 1: Cadrage",
+    task:"État de l'art détection anomalies",
+    desc:"Étude algorithmes détection anomalies. Graph-based anomaly detection. Baseline behavior modeling.",
+    start: dayIndex(2,2),  end: dayIndex(2,16),
+  },
+  {
+    id:"Jo4", owner:"Jonathan", phase:"Phase 1: Cadrage",
+    task:"Rédaction CdC complet",
+    desc:"Intégration sections équipe. Structuration document. Mise en page professionnelle. Relecture finale.",
+    start: dayIndex(2,6),  end: dayIndex(2,20),
+  },
+  {
+    id:"Jo5", owner:"Jonathan", phase:"Phase 1: Cadrage",
+    task:"Transfert CdC sur Moodle",
+    desc:"23 fév : Upload CdC finalisé PDF. Vérification conformité template. Validation liens.",
+    start: dayIndex(2,20), end: dayIndex(2,23),
+  },
+  {
+    id:"Jo6", owner:"Jonathan", phase:"Phase 1: Cadrage",
+    task:"Coordination présentation 24 fév",
+    desc:"Coordination slides équipe. Répétition timing (10' total). Introduction/conclusion projet.",
+    start: dayIndex(2,18), end: dayIndex(2,24),
+  },
+  {
+    id:"Jo7", owner:"Jonathan", phase:"Phase 1: Cadrage",
+    task:"Présentation CdC 24 fév (intro + conclusion)",
+    desc:"24 fév PM : Introduction contexte Tetragon. Coordination présentations. Conclusion objectifs. 2 min.",
+    start: dayIndex(2,24), end: dayIndex(2,25),
+  },
+  
+  {
+    id:"Jo8", owner:"Jonathan", phase:"Phase 2: Implémentation",
+    task:"Conception algorithme détection",
+    desc:"Design moteur baseline learning. Stratégie comparaison graphes. Métriques de similarité.",
+    start: dayIndex(2,20), end: dayIndex(3,8),
+  },
+  {
+    id:"Jo9", owner:"Jonathan", phase:"Phase 2: Implémentation",
+    task:"Implémentation baseline learning",
+    desc:"Enregistrement phase apprentissage comportement normal. Sérialisation graphe référence (JSON/Pickle).",
+    start: dayIndex(3,1),  end: dayIndex(3,12),
+  },
+  {
+    id:"Jo10", owner:"Jonathan", phase:"Phase 2: Implémentation",
+    task:"Développement moteur de détection",
+    desc:"Algorithme comparaison temps réel vs baseline. Règles détection (nouveaux nœuds, arêtes suspectes). Alerting.",
+    start: dayIndex(3,8),  end: dayIndex(3,20),
+  },
+  {
+    id:"Jo11", owner:"Jonathan", phase:"Phase 2: Implémentation",
+    task:"Intégration avec graphes (Ahmed)",
+    desc:"Connection API graphes d'Ahmed. Tests détection sur données réelles. Tuning seuils.",
+    start: dayIndex(3,15), end: dayIndex(3,23),
+  },
+  {
+    id:"Jo12", owner:"Jonathan", phase:"Phase 2: Implémentation",
+    task:"Rédaction rapport intermédiaire",
+    desc:"Consolidation sections équipe. Rédaction section détection. Graphiques. Mise en page finale.",
+    start: dayIndex(3,15), end: dayIndex(3,23),
+  },
+  {
+    id:"Jo13", owner:"Jonathan", phase:"Phase 2: Implémentation",
+    task:"Remise RI sur Moodle",
+    desc:"24 mars : Upload rapport intermédiaire PDF. Vérification structure conforme template.",
+    start: dayIndex(3,23), end: dayIndex(3,24),
+  },
+  {
+    id:"Jo14", owner:"Jonathan", phase:"Phase 2: Implémentation",
+    task:"Coordination soutenance mi-parcours",
+    desc:"Coordination slides équipe (30' total). Répétition. Préparation réponses questions jury.",
+    start: dayIndex(3,18), end: dayIndex(3,24),
+  },
+  {
+    id:"Jo15", owner:"Jonathan", phase:"Phase 2: Implémentation",
+    task:"Transfert présentation sur Moodle",
+    desc:"Upload slides/vidéo avant 25 mars. Format PDF + MP4 si nécessaire.",
+    start: dayIndex(3,24), end: dayIndex(3,25),
+  },
+  {
+    id:"Jo16", owner:"Jonathan", phase:"Phase 2: Implémentation",
+    task:"Soutenance 25 mars (intro + détection 7-8')",
+    desc:"25 mars AM : Introduction projet. Présentation moteur détection. Coordination équipe. Questions jury.",
+    start: dayIndex(3,25), end: dayIndex(3,26),
+  },
+  
+  {
+    id:"Jo17", owner:"Jonathan", phase:"Phase 3: Tests & Validation",
+    task:"Validation détection sur scénarios Jérémy",
+    desc:"Tests détection sur attaques réelles. Mesure précision/rappel. Analyse faux positifs.",
+    start: dayIndex(3,20), end: dayIndex(4,3),
+  },
+  {
+    id:"Jo18", owner:"Jonathan", phase:"Phase 3: Tests & Validation",
+    task:"Optimisation algorithme détection",
+    desc:"Amélioration taux détection. Réduction faux positifs. Tuning paramètres. Benchmarks.",
+    start: dayIndex(3,25), end: dayIndex(4,5),
+  },
+  {
+    id:"Jo19", owner:"Jonathan", phase:"Phase 3: Tests & Validation",
+    task:"Identification attaques non détectées",
+    desc:"Analyse attaques zero-day potentielles. Techniques d'évasion. Recommandations améliorations futures.",
+    start: dayIndex(4,1),  end: dayIndex(4,8),
+  },
+  {
+    id:"Jo20", owner:"Jonathan", phase:"Phase 3: Tests & Validation",
+    task:"Coordination rapport final",
+    desc:"Consolidation sections équipe. Rédaction synthèse générale. Conclusions. Perspectives.",
+    start: dayIndex(4,2),  end: dayIndex(4,10),
+  },
+  {
+    id:"Jo21", owner:"Jonathan", phase:"Phase 3: Tests & Validation",
+    task:"Coordination vidéo démo finale",
+    desc:"Scénario démo complète bout-en-bout. Montage vidéo. Commentaires audio. Export HD.",
+    start: dayIndex(4,5),  end: dayIndex(4,11),
+  },
+  {
+    id:"Jo22", owner:"Jonathan", phase:"Phase 3: Tests & Validation",
+    task:"Remise finale 12 avril",
+    desc:"12 avril : Upload rapport final PDF + code + vidéo démo complète + fichiers annexes.",
+    start: dayIndex(4,11), end: dayIndex(4,12),
   },
 ];
 
 // ─── COLOURS ──────────────────────────────────────────
 const C = {
-  jonathan: { bar:"#38bdf8", dark:"#0369a1", glow:"rgba(56,189,248,.4)", bg:"#e0f2fe" },
-  antoine:  { bar:"#fb923c", dark:"#c2410c", glow:"rgba(251,146,60,.4)", bg:"#fff7ed" },
-  tuteur:   { bar:"#8b5cf6", dark:"#6d28d9", glow:"rgba(139,92,246,.4)", bg:"#f3e8ff" },
+  jonathan: { bar:"#8b5cf6", dark:"#6d28d9", glow:"rgba(139,92,246,.4)", bg:"#f3e8ff" },
+  ahmed:    { bar:"#10b981", dark:"#059669", glow:"rgba(16,185,129,.4)", bg:"#d1fae5" },
+  jérémy:   { bar:"#ef4444", dark:"#dc2626", glow:"rgba(239,68,68,.4)",  bg:"#fee2e2" },
+  antoine:  { bar:"#38bdf8", dark:"#0369a1", glow:"rgba(56,189,248,.4)", bg:"#e0f2fe" },
 };
 const PHASE_C = {
-  "Tâche 1":     "#8b5cf6",
-  "Tâche 2":     "#3b82f6",
-  "Tâche 3":     "#10b981",
-  "Tâche 4":     "#f59e0b",
-  "Coordination": "#64748b",
+  "Phase 1: Cadrage":         "#8b5cf6",
+  "Phase 2: Implémentation":  "#3b82f6",
+  "Phase 3: Tests & Validation": "#10b981",
 };
 const MS_C = { session:"#64748b", pres:"#7c3aed", deadline:"#ef4444" };
 
@@ -463,14 +532,14 @@ const pct = d => `${(d / TOTAL_DAYS) * 100}%`;
 const fmtDate = dayOff => {
   const d = new Date(START);
   d.setDate(d.getDate() + dayOff);
-  return `${d.getDate()} ${["jan","fév","mar"][d.getMonth()]}`;
+  return `${d.getDate()} ${["jan","fév","mar","avr"][d.getMonth()]}`;
 };
 
-export default function GanttSAFA() {
+export default function GanttTetragon() {
   const [sel, setSel]             = useState(null);
   const [filter, setFilter]       = useState("all");
   const [now, setNow]             = useState(null);
-  const [expandedOwner, setExpandedOwner] = useState({ Jonathan: true, Antoine: true, Tuteur: true });
+  const [expandedOwner, setExpandedOwner] = useState({ Jonathan: true, Ahmed: true, Jérémy: true, Antoine: true });
   const [expandedPhase, setExpandedPhase] = useState({});
   const [taskEdits, setTaskEdits]  = useState({});
   const [editingId, setEditingId]  = useState(null);
@@ -515,24 +584,21 @@ export default function GanttSAFA() {
     };
   };
 
-  const LABEL_WIDTH = 260;
+  const LABEL_WIDTH = 280;
 
   const exportToPDF = () => {
     const element = document.getElementById("gantt-container");
     
-    // Calculer les dimensions exactes du contenu
     const contentWidth = element.scrollWidth;
     const contentHeight = element.scrollHeight;
     
-    // Calculer le format PDF adapté (en mm)
-    // Conversion: 1px ≈ 0.264583mm à 96 DPI
     const pxToMm = 0.264583;
-    const pdfWidth = Math.max(297, contentWidth * pxToMm); // Min A4 paysage (297mm)
-    const pdfHeight = Math.max(210, contentHeight * pxToMm); // Min A4 paysage (210mm)
+    const pdfWidth = Math.max(297, contentWidth * pxToMm);
+    const pdfHeight = Math.max(210, contentHeight * pxToMm);
     
     const opt = {
       margin: [5, 5, 5, 5],
-      filename: "gantt_SAFA_Master_ROC2.pdf",
+      filename: "gantt_Tetragon_USRS7N.pdf",
       image: { type: "jpeg", quality: 0.95 },
       html2canvas: { 
         scale: 2, 
@@ -583,19 +649,17 @@ export default function GanttSAFA() {
         <div style={{ flex:1 }}>
           <h1 style={{
             margin:0, fontSize:20, fontWeight:700, letterSpacing:"-.3px",
-            color:"#0369a1"
-          }}>Projet SAFA — Diagramme de Gantt</h1>
+            color:"#6d28d9"
+          }}>Projet Tetragon — Observabilité & Détection Zero-Day</h1>
           <p style={{ margin:"3px 0 0", fontSize:10.5, color:"#64748b" }}>
-            Apprentissage fédéré · Détection d'anomalies réseau · Tuteurs : Patient Ntumba, Yasmine Chaouche · Master ROC 2 — Sorbonne Université
+            USRS7N - Projets avancés en IoT et cybersécurité · eBPF, Graphes de comportement · Master 2025-2026
           </p>
         </div>
         
-        <img src="/src/assets/CNAM.png" alt="CNAM Logo" style={{ width:100, height:100, objectFit:"contain", flexShrink:0 }}/>
-        
         <div style={{ display:"flex", flexDirection:"column", gap:8, minWidth:160 }}>
           <button onClick={exportToPDF} style={{
-            background:"linear-gradient(135deg,#0369a1,#0c4a6e)",
-            border:"1.5px solid #0369a1",
+            background:"linear-gradient(135deg,#6d28d9,#5b21b6)",
+            border:"1.5px solid #6d28d9",
             color:"#fff",
             borderRadius:8,
             padding:"7px 16px",
@@ -603,24 +667,24 @@ export default function GanttSAFA() {
             fontWeight:600,
             cursor:"pointer",
             transition:"all .2s",
-            boxShadow:"0 2px 8px rgba(3,105,161,.3)",
+            boxShadow:"0 2px 8px rgba(109,40,217,.3)",
             whiteSpace:"nowrap"
           }}
-            onMouseEnter={e => e.target.style.boxShadow = "0 4px 16px rgba(3,105,161,.5)"}
-            onMouseLeave={e => e.target.style.boxShadow = "0 2px 8px rgba(3,105,161,.3)"}
+            onMouseEnter={e => e.target.style.boxShadow = "0 4px 16px rgba(109,40,217,.5)"}
+            onMouseLeave={e => e.target.style.boxShadow = "0 2px 8px rgba(109,40,217,.3)"}
           >
-            Export PDF
+            📥 Export PDF
           </button>
         </div>
       </div>
 
       <div style={{ display:"flex", justifyContent:"center", gap:8, marginBottom:10, flexWrap:"wrap", alignItems:"center" }}>
-        {["all","jonathan","antoine","tuteur"].map(f => {
+        {["all","jonathan","ahmed","jérémy","antoine"].map(f => {
           const active = filter === f;
-          const accent = f==="jonathan" ? C.jonathan.bar : f==="antoine" ? C.antoine.bar : f==="tuteur" ? C.tuteur.bar : "#94a3b8";
+          const accent = f==="jonathan" ? C.jonathan.bar : f==="ahmed" ? C.ahmed.bar : f==="jérémy" ? C.jérémy.bar : f==="antoine" ? C.antoine.bar : "#94a3b8";
           return (
             <button key={f} onClick={()=>setFilter(f)} style={{
-              background: active ? (f==="all"?"#cbd5e1":f==="jonathan"?"#e0f2fe":f==="antoine"?"#fff7ed":"#f3e8ff") : "#f1f5f9",
+              background: active ? (f==="all"?"#cbd5e1":f==="jonathan"?"#f3e8ff":f==="ahmed"?"#d1fae5":f==="jérémy"?"#fee2e2":"#e0f2fe") : "#f1f5f9",
               border:`1.5px solid ${active ? accent : "#cbd5e1"}`,
               color: active?"#1e293b":"#64748b",
               borderRadius:16, padding:"4px 15px", fontSize:11.5,
@@ -717,13 +781,13 @@ export default function GanttSAFA() {
           </div>
         </div>
 
-        {["Jonathan","Antoine","Tuteur"].map(owner => {
+        {["Jonathan","Ahmed","Jérémy","Antoine"].map(owner => {
           const ownerTasks = filtered.filter(t=>t.owner===owner);
           if (!ownerTasks.length) return null;
           const c = C[owner.toLowerCase()];
           const isOwnerExpanded = expandedOwner[owner];
           
-          const phases = ["Tâche 1", "Tâche 2", "Tâche 3", "Tâche 4", "Coordination"];
+          const phases = ["Phase 1: Cadrage", "Phase 2: Implémentation", "Phase 3: Tests & Validation"];
           const tasksByPhase = {};
           phases.forEach(p => {
             tasksByPhase[p] = ownerTasks.filter(t => t.phase === p);
@@ -816,7 +880,7 @@ export default function GanttSAFA() {
                               onChange={() => toggleTaskCompletion(t.id)}
                               style={{
                                 width:16, height:16, cursor:"pointer", marginTop:3,
-                                accentColor:"#0369a1", flexShrink:0
+                                accentColor:"#6d28d9", flexShrink:0
                               }}
                               onClick={e => e.stopPropagation()}
                             />
@@ -866,7 +930,7 @@ export default function GanttSAFA() {
                                   <button 
                                     onClick={() => setEditingId(null)}
                                     style={{
-                                      background:"#0369a1", color:"#fff", border:"none",
+                                      background:"#6d28d9", color:"#fff", border:"none",
                                       padding:"3px 10px", borderRadius:3, fontSize:9, cursor:"pointer",
                                       fontWeight:600
                                     }}
@@ -878,7 +942,7 @@ export default function GanttSAFA() {
                                 <div style={{
                                   fontSize:10.5, color:"#64748b", marginTop:5,
                                   borderTop:"1px solid #e2e8f0", paddingTop:5,
-                                  lineHeight:1.45, maxWidth:196,
+                                  lineHeight:1.45, maxWidth:216,
                                 }}>{t.desc}</div>
                               )}
                             </div>
@@ -937,7 +1001,7 @@ export default function GanttSAFA() {
           <div style={{
             width:LABEL_WIDTH, minWidth:LABEL_WIDTH,
             padding:"8px 10px",
-            fontSize:11, fontWeight:700, color:"#0369a1",
+            fontSize:11, fontWeight:700, color:"#6d28d9",
             borderRight:"1px solid #e2e8f0",
             display:"flex", alignItems:"center", gap:6,
           }}>
@@ -1010,10 +1074,14 @@ export default function GanttSAFA() {
       </div>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginTop:16 }}>
-        {["Jonathan","Antoine","Tuteur"].map(owner => {
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:10, marginTop:16 }}>
+        {["Jonathan","Ahmed","Jérémy","Antoine"].map(owner => {
           const c = C[owner.toLowerCase()];
           const ot = tasks.filter(t=>t.owner===owner);
+          const roleDesc = owner === "Jonathan" ? "Chef Projet + Détection" : 
+                          owner === "Ahmed" ? "Architecte Données (Python)" :
+                          owner === "Jérémy" ? "Red Team + Visualisation" :
+                          "Infrastructure + eBPF";
           return (
             <div key={owner} style={{
               background:"#ffffff", borderRadius:10,
@@ -1023,12 +1091,15 @@ export default function GanttSAFA() {
               <div style={{
                 fontSize:12.5, fontWeight:700, color:c.dark,
                 borderBottom:`1px solid ${c.dark}15`,
-                paddingBottom:4, marginBottom:5, letterSpacing:.5,
+                paddingBottom:4, marginBottom:3, letterSpacing:.5,
               }}>{owner}</div>
-              {ot.slice(0, 6).map(t => (
+              <div style={{ fontSize:9, color:"#94a3b8", marginBottom:6, fontStyle:"italic" }}>
+                {roleDesc}
+              </div>
+              {ot.slice(0, 5).map(t => (
                 <div key={t.id} style={{ display:"flex", alignItems:"flex-start", gap:6, padding:"2.5px 0" }}>
                   <div style={{ width:7,height:7,borderRadius:1.5,background:PHASE_C[t.phase],marginTop:5,minWidth:7 }}/>
-                  <div style={{ fontSize:10.5, color:"#475569" }}>
+                  <div style={{ fontSize:10, color:"#475569" }}>
                     <span style={{ fontWeight:600 }}>{t.task}</span>
                     <span style={{ color:"#94a3b8", fontWeight:400 }}> — {fmtDate(t.start)} → {fmtDate(t.end)}</span>
                   </div>
@@ -1040,7 +1111,7 @@ export default function GanttSAFA() {
       </div>
 
       <p style={{ textAlign:"center", fontSize:10, color:"#94a3b8", marginTop:14 }}>
-        Survolez les barres & jalons pour les détails · Cliquez pour épingler · Ligne rouge = aujourd'hui
+        Survolez les barres & jalons pour détails · Cliquez sur tâches pour éditer · Ligne rouge = aujourd'hui ({fmtDate(now || 0)})
       </p>
     </div>
   );
