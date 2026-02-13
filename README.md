@@ -5,7 +5,7 @@ Ce projet implémente une solution de **détection d'intrusion basée sur des gr
 ## 🗂️ Arborescence du Projet
 
 ```
-Architectural-Blueprint-for-eBPF-Graph-Based-Intrusion-Detection/
+Sentinel-Graph/
 ├── docs/                   # Documentation académique et technique
 ├── infra/                  # Configuration Kubernetes et politiques Tetragon
 │   ├── k8s/                # Manifestes Kubernetes
@@ -17,7 +17,7 @@ Architectural-Blueprint-for-eBPF-Graph-Based-Intrusion-Detection/
 ├── dashboard/              # Interface de visualisation (Frontend)
 ├── red_team/               # Scénarios d'attaque et validation
 ├── requirement.txt         # Dépendances Python
-└── README.md              # Ce fichier
+└── README.md               # Ce fichier
 ```
 
 ## 📚 Détails des Modules
