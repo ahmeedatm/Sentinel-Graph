@@ -5,7 +5,7 @@ Ce projet implémente une solution de **détection d'intrusion basée sur des gr
 ## 🗂️ Arborescence du Projet
 
 ```
-Architectural-Blueprint-for-eBPF-Graph-Based-Intrusion-Detection/
+Sentinel-Graph/
 ├── docs/                   # Documentation académique et technique
 ├── infra/                  # Configuration Kubernetes et politiques Tetragon
 │   ├── k8s/                # Manifestes Kubernetes
@@ -17,7 +17,7 @@ Architectural-Blueprint-for-eBPF-Graph-Based-Intrusion-Detection/
 ├── dashboard/              # Interface de visualisation (Frontend)
 ├── red_team/               # Scénarios d'attaque et validation
 ├── requirement.txt         # Dépendances Python
-└── README.md              # Ce fichier
+└── README.md               # Ce fichier
 ```
 
 ## 📚 Détails des Modules
@@ -55,20 +55,33 @@ Responsable de la **lecture et modélisation** du flux JSON Tetragon :
 
 #### 🔍 analysis/ — Détection d'Anomalies
 
-Moteur intelligent de détection basé sur l'apprentissage comportemental :
+Moteur de détection basé sur le **fingerprinting comportemental par processus** (`comm`).
+Aucun ML — les règles sont explicites et auditables.
 
-- **baseline.py** — Phase d'apprentissage du comportement normal
-  - Construit un profil de référence par application/pod
-  - Enregistre les patterns usuels
-  
-- **detector.py** — Comparaison et détection en temps réel
-  - Détecte les écarts au modèle de référence
-  - Identifie les comportements suspects (ex: accès à `/etc/passwd`, connexions non autorisées)
-  - Génère des alertes avec score de confiance
+- **baseline.py** — `BaselineLearner` : phase d'apprentissage du comportement normal
+  - Consomme des snapshots `SystemGraph.get_graph_snapshot()` via `learn()`
+  - Construit un profil par nom de processus (`comm`) :
+    - `spawns` — processus enfants observés
+    - `reads` — chemins de fichiers lus
+    - `writes` — chemins de fichiers écrits
+    - `connects` — destinations réseau `"ip:port"`
+  - Persistance JSON via `save()` / `load()`
 
-- **storage/** — Persistance des profils
-  - Sauvegarde les baselines générées
-  - Permet la comparaison historique
+- **detector.py** — `AnomalyDetector` + dataclass `Alert` : détection en temps réel
+  - Compare chaque arête d'un snapshot contre le profil baseline
+  - Types d'alertes générées :
+
+    | Type | Déclencheur | Sévérité |
+    |------|-------------|----------|
+    | `UNKNOWN_PROCESS` | `comm` absent du baseline | MEDIUM |
+    | `UNEXPECTED_SPAWN` | processus enfant non vu | HIGH |
+    | `UNEXPECTED_FILE_READ` | lecture non observée | HIGH si chemin sensible, sinon MEDIUM |
+    | `UNEXPECTED_FILE_WRITE` | écriture non observée | HIGH si chemin sensible, sinon MEDIUM |
+    | `UNEXPECTED_CONNECTION` | destination réseau non vue | HIGH |
+
+  - Chemins toujours HIGH : `/etc/passwd`, `/etc/shadow`, `/etc/sudoers`, `/root/`, `/.ssh/`, `/etc/crontab`, `/proc/`
+
+- **storage/** — Persistance des profils baseline (JSON)
 
 ### 4. dashboard/ — Visualisation Temps Réel
 **Interface utilisateur interactive pour le monitoring en temps réel :**
@@ -146,7 +159,7 @@ Suivez ces étapes pour configurer l'environnement de développement et lancer l
 1. Ouvrez un terminal et placez-vous dans la racine du projet :
 
 ```bash
-cd Architectural-Blueprint-for-eBPF-Graph-Based-Intrusion-Detection
+cd Sentinel-Graph
 ```
 
 2. Lancez le script d'installation (choisissez l'une des options) :
@@ -173,10 +186,51 @@ python -c "import streamlit, networkx, pandas; print('✓ Setup OK')"
 streamlit run dashboard/app.py
 ```
 
+6. (Optionnel) Vérifiez le moteur d'analyse :
+
+```bash
+python3 -c "
+import sys; sys.path.insert(0, 'src')
+from ingestion import EventCollector
+from analysis import BaselineLearner, AnomalyDetector
+
+c = EventCollector()
+c.process_json_file('src/ingestion/dummy_logs.json')
+snapshot = c.graph.get_graph_snapshot()
+
+learner = BaselineLearner()
+learner.learn(snapshot)
+learner.save('src/analysis/storage/baseline.json')
+
+detector = AnomalyDetector(learner)
+alerts = detector.detect(snapshot)
+print('Baseline ready:', learner.is_ready())
+print('Alerts on known traffic:', len(alerts))   # attendu : 0
+"
+```
+
 Remarques :
 - Le fichier `.env` est généré automatiquement par le script et contient les variables de configuration (port du dashboard, chemins de stockage, etc.).
 - Si `venv/`, `data/`, `models/` ou `logs/` existent localement et que vous voulez tout reprendre à zéro, supprimez `venv/` puis relancez le script d'installation.
 
+
+## 🧪 Tests
+
+```bash
+# Lancer tous les tests
+pytest
+
+# Avec couverture de code (cible ≥ 80 %)
+pytest --cov=src --cov-report=term-missing
+
+# Tests par module
+pytest tests/test_baseline.py tests/test_detector.py -v   # analyse
+pytest tests/test_graph_model.py tests/test_collector.py -v  # ingestion
+```
+
+Couverture actuelle : **91 %** (149 tests).
+
+---
 
 ## 📝 Documentation Supplémentaire
 
