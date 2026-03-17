@@ -1,0 +1,15 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  # Montage des répertoires noyau pour eBPF
+  extraMounts:
+  - hostPath: /lib/modules
+    containerPath: /lib/modules
+    readOnly: true
+  - hostPath: /usr/src
+    containerPath: /usr/src
+    readOnly: true
+  - hostPath: /sys/kernel/debug
+    containerPath: /sys/kernel/debug
+    readOnly: false
