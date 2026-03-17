@@ -1,0 +1,503 @@
+%% 
+%% File:    PResCnam-v1.tex
+%% Author:  Stefano Secci (stefano.secci@lecnam.net)
+%% Adapté pour le projet CNAM
+%% 
+
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[francais]{babel}
+\usepackage{fancyhdr}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{epsfig}
+\usepackage{calc}
+\usepackage{url}
+\usepackage{boxedminipage}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Définitions à personnaliser 
+
+%%%% Indiquer le nom de l'encadrant ci-dessous:
+\def\nomEncad{Y. ~Benchaïb} % 
+
+%%%% Indiquer les noms des étudiants participant ci-dessous:
+\def\nomEtudA{J.~Mootooveeren}
+\def\nomEtudB{A.~Atmane}
+\def\nomEtudC{A.~Landois}
+\def\nomEtudD{J.~Montguillon}
+
+%%%% Indiquer la référence (numero) et le nom du sujet ci-dessous:
+\def\refProjet{2} 
+\def\titreProjetCourt{Tetragon \& eBPF IDS}
+\def\titreProjetLong{Observabilité et graphes de comportement avec Tetragon pour des attaques zero-day}
+
+\def\typeDoc{Rapport Intermédiaire}
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Définitions à ne pas modifier
+ 
+\setlength{\voffset}{-1in} 
+\setlength{\topmargin}{15mm}         
+\setlength{\headheight}{20mm}        
+\setlength{\headsep}{10mm}            
+\setlength{\textheight}{220mm}       
+\setlength{\footskip}{12mm}          
+
+\setlength{\hoffset}{-1in} 
+\setlength{\oddsidemargin}{25mm}     
+\setlength{\evensidemargin}{25mm}    
+\setlength{\marginparwidth}{0mm}     
+\setlength{\marginparsep}{0mm}       
+\setlength{\textwidth}{160mm}        
+
+\def\annee{2025-26} % 
+
+\begin{document}
+\selectlanguage{francais}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Définition des en-têtes et pied de pages
+\pagestyle{fancyplain}
+\lhead[\fancyplain{}{\texttt{Conservatoire national des arts et métiers}\\
+          UE \textbf{USRS7N} Mars \annee \\ \nomEncad}]
+      {\fancyplain{}{\textsc{Conservatoire national des arts et métiers}\\
+          UE \textbf{USRS7N} Mars \annee \\ \nomEncad}}
+\chead[\fancyplain{}{\textbf{Projet \refProjet\\\titreProjetCourt}}]
+      {\fancyplain{}{\textbf{Projet \refProjet\\\titreProjetCourt}}}
+\rhead[\fancyplain{}{\nomEtudA\\\nomEtudB\\\nomEtudC\\\nomEtudD}]
+      {\fancyplain{}{\nomEtudA\\\nomEtudB\\\nomEtudC\\\nomEtudD}}
+\lfoot[\fancyplain{}{\includegraphics[width=3cm]{logo-cnam.png}}]
+      {\fancyplain{}{\includegraphics[width=3cm]{logo-cnam.png}}}
+\cfoot[\fancyplain{}{\textbf{\thepage/\pageref{fin}}}]
+      {\fancyplain{}{\textbf{\thepage/\pageref{fin}}}}
+\rfoot[\fancyplain{}{\typeDoc}]
+      {\fancyplain{}{\typeDoc}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+~
+
+\begin{center}
+  \begin{boxedminipage}{14cm}{
+      \begin{center}
+        ~\\\LARGE\textbf{\titreProjetLong}\\
+        ~\\\large Encadrant: \textbf{\nomEncad}\\
+        ~\\\large Etudiants: \textbf{\nomEtudA, \nomEtudB, \nomEtudC, \nomEtudD}\\
+        ~
+      \end{center}
+      }
+  \end{boxedminipage}
+\end{center}
+
+~
+
+\tableofcontents
+
+\newpage
+
+\section{Cahier des charges}
+
+L'émergence des architectures cloud-native et des environnements conteneurisés a complexifié la sécurisation des systèmes d'information. Face à la sophistication des cybermenaces, et plus particulièrement des attaques de type \textit{zero-day} exploitant des vulnérabilités encore inconnues, les systèmes de détection d'intrusion (IDS) traditionnels basés sur des signatures atteignent leurs limites. Il est désormais crucial de s'orienter vers des mécanismes d'analyse comportementale proactifs. C'est dans ce cadre que s'inscrit ce projet, en s'appuyant sur eBPF (\textit{Extended Berkeley Packet Filter}), une technologie permettant une observabilité performante et sécurisée directement dans le noyau Linux.
+
+L'objectif de ce projet est de concevoir, déployer et évaluer une solution de détection d'intrusion basée sur la modélisation de graphes comportementaux, en utilisant Tetragon, un outil open source issu de l'écosystème Cilium. Le système devra identifier les comportements suspects à bas niveau sans nécessiter de modification du noyau.
+
+Pour atteindre cet objectif, le projet s'articulera autour de plusieurs tâches. Dans un premier temps, il s'agira de réaliser un état de l'art détaillé sur les technologies eBPF, l'observabilité cloud-native et l'utilisation des graphes pour la cybersécurité. Ensuite, une étude technique approfondie de Tetragon sera menée pour comprendre son fonctionnement et sa configuration via les \textit{TracingPolicies}. 
+La troisième tâche consistera à définir et implémenter une chaîne d'outils (en Python) capable d'ingérer les événements JSON générés par Tetragon pour les transformer en graphes de comportement (liant pods, processus, fichiers et connexions réseau). 
+Enfin, un environnement virtuel Linux/Kubernetes sera déployé pour simuler des scénarios légitimes et des attaques (Red Teaming, escalade de privilèges). Ce banc d'essai permettra d'évaluer l'efficacité de la solution et d'identifier les attaques potentiellement indétectables par cette approche.
+
+\section{Plan de développement}
+
+\subsection{Introduction}
+
+Ce projet vise à concevoir une plateforme de détection d’anomalies zero-day dans un environnement Kubernetes, en exploitant l’observabilité bas niveau offerte par eBPF. L’objectif scientifique est d’évaluer si la modélisation des comportements système sous forme de graphes dynamiques permet d’identifier des activités malveillantes inédites sans signature préalable.
+
+L’architecture repose sur la collecte d’événements noyau via Tetragon, leur transformation en structures exploitables, puis leur analyse algorithmique pour détecter des déviations comportementales. Le développement est structuré en quatre tâches progressives couvrant cadrage, implémentation, validation et consolidation.
+
+\subsection{Tâche 1 : Cadrage scientifique et architectural}
+
+Cette première phase établit les bases conceptuelles et techniques. Elle comprend une étude approfondie d’eBPF et du fonctionnement de Tetragon en environnement Kubernetes (déploiement DaemonSet, TracingPolicies). Un état de l’art sur la détection d’anomalies basée sur graphes est réalisé, ainsi qu’une analyse des scénarios d’attaque inspirés du framework MITRE ATT\&CK.
+
+Les livrables incluent un cahier des charges détaillé, un schéma d’architecture globale (collecte, traitement, stockage, analyse) et un planning précis. Cette phase garantit la cohérence scientifique et la faisabilité technique du projet.
+
+\subsection{Tâche 2 : Implémentation de l’infrastructure et du pipeline}
+
+Cette phase correspond au cœur du développement. L’infrastructure Kubernetes est déployée localement afin d’héberger Tetragon et les composants applicatifs. Les événements système collectés sont transformés en graphes dynamiques à l’aide de NetworkX.
+
+Un pipeline Python assure l’ingestion, la normalisation et la mise à jour continue des graphes comportementaux. Un modèle de référence (baseline) représentant le comportement normal est construit. Des métriques d’évaluation sont définies : précision, rappel et taux de faux positifs. Cette étape permet d’obtenir un prototype fonctionnel.
+
+\subsection{Tâche 3 : Validation expérimentale et tests offensifs}
+
+La troisième phase consiste à évaluer la robustesse du système. Des scénarios d’attaque contrôlés (reverse shell, élévation de privilèges, exfiltration) sont exécutés afin d’observer la capacité du modèle à détecter des déviations.
+
+Une analyse quantitative est menée à partir des métriques définies précédemment. Les cas de non-détection sont étudiés afin d’identifier les limites structurelles du modèle et d’améliorer les critères de comparaison de graphes.
+
+\subsection{Tâche 4 : Optimisation et finalisation}
+
+La dernière phase vise l’optimisation des performances (complexité des graphes, latence d’analyse) et l’amélioration de la visualisation via un tableau de bord interactif. Le code est documenté pour garantir la reproductibilité. Le rapport final consolide l’ensemble des résultats expérimentaux et des choix méthodologiques.
+
+
+\section{État de l'art}
+
+Dans un contexte technologique où les architectures monolithiques cèdent la place aux microservices orchestrés par des solutions comme Kubernetes, les surfaces d'attaque se sont démultipliées. La sécurité périmétrique classique est devenue insuffisante, imposant l'adoption de stratégies de sécurité dites \textit{Zero Trust} et nécessitant une observabilité au plus près du système d'exploitation. Cette section dresse un panorama des technologies sous-jacentes à notre projet, en détaillant eBPF, les concepts d'observabilité avec Tetragon, et l'application de la théorie des graphes à la détection de menaces zero-day.
+
+\subsection{Fondements et évolution d'eBPF}
+La technologie BPF (\textit{Berkeley Packet Filter}) a été initialement conçue en 1992 pour le filtrage de paquets réseau de manière performante. Cependant, depuis 2014, le noyau Linux a intégré une version profondément remaniée : eBPF (\textit{Extended BPF}) \cite{gbadamosi2024ebpf}. 
+
+Souvent comparé à ce que JavaScript représente pour les navigateurs web, eBPF permet d'exécuter des programmes personnalisés au sein même du noyau Linux, sans avoir à modifier le code source de ce dernier ni à charger des modules additionnels (LKM - \textit{Linux Kernel Modules}), historiquement sources d'instabilités et de failles de sécurité \cite{vieira2020fast}. La sécurité de l'hôte est garantie par un composant clé : le vérificateur (\textit{verifier}). Avant toute exécution, ce vérificateur analyse le bytecode eBPF pour s'assurer qu'il ne contient pas de boucles infinies, qu'il n'accède pas à de la mémoire non autorisée et qu'il se terminera toujours.
+
+Sur le plan des performances, eBPF utilise un compilateur JIT (\textit{Just-In-Time}) qui traduit le bytecode en instructions machine natives à la volée \cite{scholz2018performance}. Les programmes eBPF peuvent s'attacher à de multiples points d'ancrage (\textit{hooks}) du système, tels que les appels système (\textit{syscalls}), les points de trace réseau (XDP, TC) ou encore via des kprobes et uprobes (permettant d'instrumenter presque n'importe quelle fonction du noyau ou de l'espace utilisateur).
+
+\subsection{L'Observabilité Cloud-Native et Cilium}
+L'observabilité va au-delà du simple \textit{monitoring}. Alors que le monitoring permet de savoir si un système est défaillant, l'observabilité vise à comprendre pourquoi il est défaillant en exposant son état interne. Selon Ghane \cite{ghane2025observability}, dans les environnements cloud-native, cette observabilité repose traditionnellement sur la collecte de métriques, de journaux et de traces distribuées.
+
+Toutefois, dans des clusters Kubernetes hautement dynamiques, l'instrumentation manuelle du code ou l'utilisation d'agents en espace utilisateur (\textit{sidecars}) génère une surconsommation de ressources (\textit{overhead}) et manque parfois de contexte système. Le projet Cilium exploite eBPF pour résoudre ce problème en offrant une observabilité réseau, sécurité et applicative de manière transparente. Les événements capturés par le noyau sont automatiquement enrichis avec les métadonnées de l'orchestrateur (namespaces, labels Kubernetes, noms des pods), fournissant un contexte inestimable pour les analystes de sécurité.
+
+\subsection{Tetragon : Sécurité et filtrage dans le noyau}
+Tetragon \cite{tetragon_web}, développé initialement par Isovalent et intégré à l'écosystème Cilium, est un agent de sécurité basé sur eBPF spécifiquement conçu pour l'observabilité fine des processus, des fichiers et du réseau en temps réel.
+
+Sa principale innovation réside dans son architecture de \textit{Smart in-kernel filtering}. Contrairement à d'autres solutions (comme Falco ou Auditd) qui se contentent de capturer tous les appels système pour les envoyer vers l'espace utilisateur afin d'y être évalués, Tetragon évalue les politiques de sécurité directement dans le noyau \cite{cilium_web}. Ce changement de paradigme évite les coûteux changements de contexte (\textit{context switches}) entre l'espace noyau et l'espace utilisateur.
+
+Grâce aux \textit{TracingPolicies} définies sous forme de Custom Resource Definitions (CRD) Kubernetes, il est possible de spécifier avec précision quels événements doivent être surveillés (par exemple, l'appel système \texttt{execve} lors du lancement d'un processus). Si Tetragon détecte une violation de politique (par exemple, un processus non privilégié tentant d'écrire dans \texttt{/etc/shadow}), il peut non seulement générer une alerte asynchrone, mais aussi bloquer l'action de manière synchrone (Enforcement) en utilisant un signal \texttt{SIGKILL} avant même que l'appel système ne s'achève.
+
+\subsection{Détection de menaces Zero-Day par l'analyse de Graphes}
+Les attaques zero-day exploitent des vulnérabilités pour lesquelles aucun correctif ni aucune signature de détection n'existent encore. Les systèmes de détection d'intrusion (IDS) traditionnels, aveugles face à ces menaces, doivent être suppléés par des analyses comportementales cherchant à identifier des déviations par rapport à un fonctionnement nominal.
+
+La modélisation du comportement d'un système sous forme de \textbf{graphes de provenance} (Provenance Graphs) offre une représentation sémantique puissante. Dans ce modèle, les nœuds représentent les entités du système (processus, fichiers, sockets réseau, utilisateurs) et les arêtes (liens orientés) représentent les interactions causales entre ces entités (ex: le processus A \textit{fork} le processus B ; le processus B \textit{read} le fichier C).
+
+L'ingestion des logs d'événements haute-fidélité fournis par Tetragon permet de construire ces graphes en temps réel. L'avantage majeur du graphe est sa capacité à conserver le contexte historique et la chaîne causale d'une attaque. Lors d'une attaque zero-day, l'exploit initial peut passer inaperçu, mais la charge utile (payload) qui en découle—comme le lancement inattendu d'un shell, la modification de fichiers critiques ou la communication avec un serveur de commande et contrôle (C2) externe—modifiera la topologie du graphe de manière atypique. 
+
+En comparant le graphe généré en temps réel avec un graphe de référence (la \textit{baseline} acquise lors d'une phase d'apprentissage en environnement sain), les algorithmes d'analyse peuvent isoler les sous-graphes suspects, émettant ainsi des alertes contextuelles à haute valeur ajoutée.
+
+\subsection{Défis techniques et limites abordées}
+Si cette combinaison eBPF/Graphes est prometteuse, elle soulève des défis d'ingénierie majeurs. La granularité des données générées par eBPF implique le traitement d'un volume massif d'événements. La construction et la comparaison de graphes en mémoire (avec des outils comme NetworkX ou des bases orientées graphes) peuvent introduire une latence difficilement compatible avec une détection temps réel stricte.
+
+Par ailleurs, certaines techniques d'évasion avancées ciblent spécifiquement les mécanismes de traçage. Les attaques de type \textit{Time-of-Check to Time-of-Use} (TOCTOU) tentent de modifier les arguments d'un appel système (comme un chemin de fichier) dans l'espace utilisateur juste après que le vérificateur eBPF l'ait analysé, mais avant que le noyau ne l'utilise. L'étude de ces limites, ainsi que la capacité de Tetragon à s'en prémunir grâce à l'accès direct aux structures internes du noyau, feront l'objet d'une analyse critique lors des phases de test de ce projet.
+
+\section{Analyse}
+
+Cette section vise à formaliser les besoins du projet et à détailler les problématiques techniques et scientifiques associées à chacune des tâches définies dans le plan de développement. L'objectif est de mettre en évidence les verrous à lever pour obtenir un système fonctionnel de détection d’anomalies zero-day.
+
+\subsection{Tâche 1 : L'Ingénieur Infrastructure \& eBPF (Ops) - Cadrage scientifique et architectural}
+
+\textbf{Objectif :} Mettre en place les bases techniques pour la collecte et la filtration des événements système.
+
+\textbf{Problématiques identifiées :}
+\begin{itemize}
+    \item \textbf{Complexité de l'environnement :} Déployer un cluster Kubernetes local (Kind ou Minikube) et comprendre l'interaction des pods, namespaces et processus.
+    \item \textbf{Configuration de Tetragon :} Définir des TracingPolicies pertinentes pour capturer uniquement les événements critiques (\texttt{execve}, \texttt{tcp\_connect}) sans générer de surcharge excessive.
+    \item \textbf{Compréhension scientifique :} Effectuer un état de l’art sur eBPF et sur la détection d’anomalies par graphes pour garantir la cohérence des choix techniques.
+\end{itemize}
+
+\textbf{Besoins :} 
+\begin{itemize}
+    \item Collecter des événements fiables et structurés.
+    \item Assurer un compromis entre exhaustivité et performance.
+    \item Produire un flux JSON filtré et exploitable pour les phases suivantes.
+\end{itemize}
+
+\subsection{Tâche 2 : L'Architecte de Données (Mapper Python) - Implémentation du pipeline et modélisation}
+
+\textbf{Objectif :} Transformer les événements collectés en graphes de comportement exploitables.
+
+\textbf{Problématiques identifiées :}
+\begin{itemize}
+    \item \textbf{Normalisation et ingestion des données :} Traiter un flux JSON potentiellement volumineux et hétérogène.
+    \item \textbf{Modélisation du graphe :} Définir les nœuds (processus, fichiers, pods, IP) et les arêtes (SPAWNS, CONNECTS\_TO, MODIFIES) de manière cohérente et évolutive.
+    \item \textbf{Performance et mise à jour :} Maintenir un graphe dynamique en temps réel sans dégrader les performances du système.
+    \item \textbf{Construction de la baseline :} Identifier un modèle de comportement normal fiable pour les comparaisons ultérieures.
+\end{itemize}
+
+\textbf{Besoins :} 
+\begin{itemize}
+    \item Disposer d’un pipeline robuste pour ingérer, transformer et stocker les graphes.
+    \item Assurer la persistance et la cohérence des graphes (NetworkX ou Neo4j).
+    \item Fournir des métriques d’évaluation (précision, rappel, taux de faux positifs).
+\end{itemize}
+
+\subsection{Tâche 3 : Le Développeur Algorithmique (Analyste) - Validation expérimentale et tests offensifs}
+
+\textbf{Objectif :} Évaluer la capacité du système à détecter des anomalies et identifier ses limites.
+
+\textbf{Problématiques identifiées :}
+\begin{itemize}
+    \item \textbf{Détection d’anomalies :} Comparer les graphes générés en temps réel avec la baseline pour identifier des écarts significatifs.
+    \item \textbf{Scénarios d’attaque :} Concevoir des attaques représentatives (reverse shell, élévation de privilèges, exfiltration) pour tester la robustesse.
+    \item \textbf{Analyse des cas de non-détection :} Identifier les limites du modèle et les situations où des anomalies peuvent passer inaperçues.
+    \item \textbf{Performance temps réel :} Assurer une détection rapide malgré la complexité des graphes et du volume d’événements.
+\end{itemize}
+
+\textbf{Besoins :} 
+\begin{itemize}
+    \item Disposer d’un moteur de comparaison de graphes efficace et évolutif.
+    \item Documenter et analyser les faux négatifs pour ajuster les algorithmes.
+    \item Définir des critères précis pour quantifier la qualité de détection.
+\end{itemize}
+
+\subsection{Tâche 4 : Le Red Teamer \& Visualiseur (QA / Frontend) - Optimisation et finalisation}
+
+\textbf{Objectif :} Optimiser les performances et fournir une visualisation interactive des résultats.
+
+\textbf{Problématiques identifiées :}
+\begin{itemize}
+    \item \textbf{Complexité et latence :} Optimiser le traitement des graphes pour une utilisation interactive.
+    \item \textbf{Visualisation :} Rendre les graphes lisibles et compréhensibles, même avec un grand nombre de nœuds et d’arêtes.
+    \item \textbf{Reproductibilité et documentation :} Garantir que le système peut être déployé et testé dans différents environnements.
+\end{itemize}
+
+\textbf{Besoins :} 
+\begin{itemize}
+    \item Développer un tableau de bord interactif (Streamlit ou Dash) pour visualiser les graphes et anomalies.
+    \item Documenter les scénarios et les résultats expérimentaux.
+    \item Assurer une architecture modulaire et maintenable.
+\end{itemize}
+
+\subsection{Synthèse générale}
+
+L’analyse des tâches met en évidence des problématiques transversales :
+
+\begin{itemize}
+    \item Gestion d’un flux massif d’événements et performances en temps réel.
+    \item Modélisation pertinente et évolutive des graphes comportementaux.
+    \item Détection d’anomalies robustes face à des attaques inconnues.
+    \item Cohérence entre collecte, transformation, analyse et visualisation.
+\end{itemize}
+
+Ces verrous techniques et scientifiques orientent la conception et la mise en œuvre du système, et constituent la base pour le développement et l’évaluation expérimentale.
+
+\section{Conception}
+
+\subsection{Introduction}
+
+L'objectif principal de cette conception est de définir une solution d'intrusion detection moderne, capable de fournir une visibilité approfondie sur les activités système et réseau, de détecter les comportements malveillants en temps quasi réel, et de présenter l'information sous forme de graphes pour faciliter l'analyse et la corrélation.
+
+La solution s'articule autour d'une instrumentation noyau légère basée sur eBPF (extended Berkeley Packet Filter), d'un pipeline de traitement capable de transformer les événements bruts en un modèle de graphe riche, et d'une interface de visualisation et d'analyse permettant d'interagir avec les données. Elle s'adresse aux environnements de production, aux infrastructures cloud et aux laboratoires de R
+d, où les exigences de performance et de sécurité sont élevées.
+
+La démarche retenue vise à minimiser l'impact sur le système observé (faible overhead), à rendre l'architecture modulaire pour faciliter les adaptations et extensions, et à proposer un ensemble d'outils permettant de déployer rapidement une maquette fonctionnelle.
+
+\subsection{Architecture générale de la solution}
+
+La conception repose sur un modèle par couches, permettant la séparation des responsabilités et le couplage faible entre composants :
+
+\begin{itemize}
+  \item \textbf{Couche d'acquisition} : collecte des données à l'aide d'eBPF dans le noyau Linux.
+  \item \textbf{Couche de traitement} : ingestion, normalisation, enrichissement, corrélation et détection.
+  \item \textbf{Couche de stockage} : écriture des données traitées dans un système persistant pragmatique.
+  \item \textbf{Couche de présentation} : interface de visualisation et d'exploration permettant aux analystes et aux opérateurs d'interagir avec les données.
+\end{itemize}
+
+Ce modèle permet de faire évoluer indépendamment les composants (par exemple remplacer le moteur de stockage sans impacter l'acquisition) et d'ajouter des services auxiliaires (alerting, export vers SIEM) sans modifier le cœur du pipeline.
+
+\subsection{Capture et instrumentation (couche eBPF)}
+
+La couche d'acquisition est construite autour de programmes eBPF chargés dans le noyau. Ces programmes sont conçus pour être petits, efficaces et pour exposer uniquement les données nécessaires.
+
+### Principes de conception eBPF
+
+\begin{itemize}
+  \item déclenchement sur des points d'entrée critiques (syscalls, sockets, tracepoints, kprobes). 
+  \item collecte d'un ensemble minimal de métadonnées afin de réduire la charge et la taille des événements.
+  \item utilisation de structures eBPF (maps, perf ring buffers) pour transférer les événements à l'espace utilisateur.
+  \item maintien d'un état temporaire en noyau pour suivre les relations clées (connexion socket, relation père/enfant de processus, suivi de file descriptors).
+  \item capacité à activer/désactiver dynamiquement certains probes pour ajuster l'empreinte en fonction du contexte.
+\end{itemize}
+
+### Types d'événements collectés
+
+Les événements collectés incluent :
+
+\begin{itemize}
+  \item **Appels système** : \texttt{execve}, \texttt{open/openat}, \texttt{connect}/\texttt{accept}, \texttt{read}/\texttt{write}, \texttt{clone}/\texttt{fork}/\texttt{execve} pour suivre la création de processus.
+  \item **Événements réseau** : établissements de connexion TCP/UDP, ouverture de sockets, envoi/réception de paquets (estimations sommaires, pas nécessairement chaque paquet).
+  \item **Accès aux fichiers** : opérations sur des fichiers sensibles (configuration, clés, etc.) et modifications d'ACL.
+  \item **Sécurité** : événements audit, interactions avec SELinux/AppArmor, utilisation de cgroups, modifications de capabilities.
+\end{itemize}
+
+Chaque événement est enrichi à la source avec des identifiants uniques (PID, UID, IP, port, timestamp) afin de permettre la corrélation dans l'espace utilisateur.
+
+\subsection{Pipeline de traitement et génération de graphes}
+
+Une fois extraits du noyau, les événements transitent par un pipeline de traitement dans l'espace utilisateur. Ce pipeline est conçu pour être résilient, capable de supporter des rafales d'événements et de s'adapter à différentes tailles d'environnement.
+
+### Étapes clés du pipeline
+
+\begin{enumerate}
+  \item \textbf{Ingestion} : lecture ordonnée des événements depuis les buffers eBPF (perf buffer, map polling) avec des stratégies de backpressure pour éviter la perte de données en cas de saturation.
+  \item \textbf{Normalisation} : transformation des événements bruts en un modèle commun (schéma JSON ou objets métiers) afin de faciliter le traitement en aval. L'objectif est de disposer d'un format stable pour l'indexation et l'analyse.
+  \item \textbf{Enrichissement} : injection de métadonnées supplémentaires (données de géolocalisation d'adresses IP, classification de processus via des signatures, lookup des versions de binaires, contexte de conteneur/Kubernetes, etc.).
+  \item \textbf{Corrélation et agrégation} : construction d'un modèle de graphe dynamique au fil de l'eau. Les entités (nœuds) représentent des processus, sockets, fichiers, hôtes, tandis que les relations (arêtes) représentent des actions (ouverture, connexion, lecture, exécution). L'agrégation permet de réduire le bruit en regroupant des événements similaires sur une même période (par exemple, une série de lectures de fichiers depuis un même processus).
+  \item \textbf{Détection} : application de règles et d'algorithmes pour détecter des comportements suspects. Les règles peuvent être déclaratives (pattern matching sur les graphes) ou dynamiques (détection d'anomalies par apprentissage léger). Les mécanismes suivants sont envisagés :
+  \begin{itemize}
+    \item détection de flux anormaux (exfiltration, C2) ;
+    \item repérage de chaînes d'actions (processus malveillants déclenchant des modifications système) ;
+    \item alerting basé sur des seuils ou des modèles statistiques (comportement déviant par rapport au profil d'usage normal) ;
+    \item corrélation avec des indicateurs de compromission externes (IOC) et des listes noires.
+  \end{itemize}
+  \item \textbf{Stockage} : persistance des graphes et des événements dans un système adapté. Le stockage doit permettre des requêtes temporelles (rejouer un incident) et des traversées de graphes (suivre une chaîne d'actions). L'architecture prévoit une base de données principale (graph store / time-series) et une couche d'indexation pour les recherches rapides.
+\end{enumerate}
+
+### Modèle de graphe
+
+Le modèle repose sur une représentation orientée des interactions :
+
+\begin{itemize}
+  \item nœuds : process, conteneur, hôte, fichier, socket, adresse IP, port ;
+  \item arêtes : relations \texttt{a ouvert}, \texttt{a connecté}, \texttt{a exécuté}, \texttt{a lu/écrit}, \texttt{a modifié} ;
+  \item attributs : timestamp, UID/GID, hash de fichier, type de protocole, statut de connexion, etc.
+\end{itemize}
+
+Ce modèle facilite l'extraction de sous-graphes pertinents (chaîne d'attaque, trajectoire d'exfiltration) et permet de définir des règles basées sur des motifs de graphes.
+
+\subsection{Visualisation et tableau de bord}
+
+L'interface de visualisation permet d'interagir avec les données, de comprendre les incidents et de définir des actions.
+
+### Objectifs de l'interface
+
+\begin{itemize}
+  \item offrir une vue en temps réel des activités (graphes dynamiques, flux) ;
+  \item permettre des recherches textuelles et des requêtes avancées sur le modèle de graphe ;
+  \item proposer des tableaux de bord orientés sécurité (alertes, top sources, top processus, anomalies) ;
+  \item fournir des capacités d'investigation (recherche d'incidents, reconstruction de trajectoires, export de traces) ;
+  \item inclure une gestion des règles de détection (création, test, activation/désactivation).
+\end{itemize}
+
+### Approche technique
+
+L'interface peut être implémentée sous forme de SPA (Single Page Application) en utilisant un framework moderne (React ou Vue). Pour la visualisation des graphes, une bibliothèque spécialisée (Cytoscape.js, D3.js) est utilisée pour afficher des graphes interactifs et permettre :
+
+\begin{itemize}
+  \item zoom/pan et navigation sur les graphes ;
+  \item extraction d'un sous-graphe à partir d'un nœud ou d'un événement ;
+  \item affichage de métadonnées au survol/clic ;
+  \item filtrage (par type d'événement, par utilisateur, par hôte, etc.).
+\end{itemize}
+
+Une API REST ou GraphQL expose les données du moteur de stockage vers l'interface.
+
+\subsection{Maquette de la solution}
+
+La maquette a pour objectif de fournir un démonstrateur opérationnel mettant en œuvre les principales mécaniques de la conception : collecte eBPF, pipeline de traitement, génération de graphes, détection et visualisation.
+
+### Scénario de démonstration
+
+La maquette est construite autour de scénarios simples mais représentatifs :
+
+\begin{itemize}
+  \item détection d'un scan réseau (série de connexions TCP rapides) ;
+  \item détection d'une exécution de binaire suspect suivie d'ouverture de sockets vers l'extérieur ;
+  \item détection d'une tentative de modification de fichiers sensibles (ex : /etc/passwd) ;
+  \item corrélation d'une chaîne d'actions (processus parent -> lancement d'un shell -> connexion sortante) ;
+\end{itemize}
+
+Ces scénarios permettent d'évaluer les capacités de détection, de visualisation et de navigation dans les graphes.
+
+\subsection{Configuration et déploiement de la maquette}
+
+La maquette est conçue pour être rapidement déployée dans un environnement de test. Elle utilise des composants conteneurisés et des scripts d'automatisation.
+
+\paragraph{Environnement cible}
+
+Un hôte Linux récent (kernel 5.x ou plus) est recommandé pour bénéficier des fonctionnalités eBPF les plus récentes. Un accès root est nécessaire pour charger les programmes eBPF.
+
+\paragraph{Composants standards}
+
+\begin{itemize}
+  \item Agent eBPF : charge et gère les programmes eBPF ; collecte et émet les événements.
+  \item Service de traitement : ingère les événements, construit le graphe et évalue les règles.
+  \item Base de stockage : persiste les graphes et les événements (base de graphes ou time-series).
+  \item Interface de visualisation : dashboard web.
+\end{itemize}
+
+\paragraph{Déploiement}
+
+Le scénario de déploiement peut s'appuyer sur Docker/Docker Compose pour simplifier l'installation :
+
+\begin{enumerate}
+  \item cloner le dépôt ;
+  \item exécuter un script d'initialisation (installation des dépendances, compilation des programmes eBPF) ;
+  \item démarrer les conteneurs (agent, traitement, stockage, UI) ;
+  \item valider l'intégrité du pipeline (vérifier que les événements sont bien reçus et stockés) ;
+  \item lancer les scénarios de démonstration et observer les résultats dans l'interface.
+\end{enumerate}
+
+\subsection{Principes d'évolutivité et de robustesse}
+
+La conception prévoit des mécanismes permettant de faire évoluer la solution :
+
+\begin{itemize}
+  \item découplage strict entre collecte, traitement et stockage ;
+  \item possibilité de scaler horizontalement les composants (plusieurs workers de traitement, clusters de stockage) ;
+  \item gestion des défauts (reprise sur panne, file d'attente persistante, relecture d'événements) ;
+  \item instrumentation et métriques (exposition de métriques Prometheus, logs structurés) pour mesurer l'usage et détecter les anomalies de charge.
+\end{itemize}
+
+\subsection{Réutilisation et intégration}
+
+La conception favorise une intégration aisée avec des systèmes existants :
+
+\begin{itemize}
+  \item export des alertes et événements vers un SIEM (Elastic, Splunk, etc.) ;
+  \item utilisation d'une interface REST/GraphQL standard pour récupérer les données ;
+  \item possibilité de consommer les événements en mode "pub/sub" (Kafka, RabbitMQ) pour des pipelines externes ;
+  \item support multi-tenant (séparation logique des données par client/escop) dans une architecture cloud.
+\end{itemize}
+
+\subsection{Conclusion}
+
+Cette conception présente une solution complète et modulable pour une détection d'intrusion basée sur eBPF et l'analyse de graphes. Elle se concentre sur une base solide (collecte efficace, modèle de graphe riche, visualisation interactive) tout en restant extensible (nouveaux détecteurs, enrichissement, intégrations). Le document fournit une base de travail claire pour implémenter une maquette, démontrer des scénarios de détection et servir de fondation à une solution opérationnelle.
+
+
+\section{Etat d'avancement / Compte rendu}
+
+À ce stade du projet, une maquette fonctionnelle a été développée pour valider l'architecture proposée. L'accent a été mis sur la collecte des événements via eBPF et sur la construction d'un pipeline de traitement capable de transformer ces événements en un modèle de graphe exploitable.
+
+Le prototype inclut :
+
+\begin{itemize}
+  \item un module d'instrumentation eBPF chargé de capturer des appels système et des événements réseau pertinents ;
+  \item un pipeline de traitement en espace utilisateur qui normalise, enrichit et corrèle les événements pour construire des relations sous forme de graphes ;
+  \item un premier jeu de règles de détection permettant d'identifier des scénarios simples (scan réseau, exécution de binaire suspect, accès à des fichiers sensibles) ;
+  \item une interface de visualisation de base permettant d'explorer les graphes et de suivre les incidents détectés.
+\end{itemize}
+
+Des scripts d'automatisation (Docker, configuration) sont disponibles pour faciliter le déploiement de la maquette sur un environnement de test. La documentation relative à l'installation et à l'exécution a également été rédigée afin d'accompagner la mise en service.
+
+Les éléments en cours de développement sont :
+
+\begin{itemize}
+  \item le renforcement des règles de détection (ajout de corrélations plus complexes et de signatures) ;
+  \item l'amélioration de la robustesse du pipeline (gestion des pics de charge, reprise sur panne) ;
+  \item l'enrichissement de l'interface pour supporter des requêtes plus avancées et des vues de type "investigation".
+\end{itemize}
+
+L'état actuel permet de démontrer la faisabilité de l'approche, tout en laissant de la marge pour compléter la couverture fonctionnelle et améliorer la maturité du produit.
+
+\newpage
+\begin{thebibliography}{9}
+
+\bibitem{tetragon_web}
+Projet Tetragon. \textit{eBPF-based Security Observability and Runtime Enforcement}. Disponible sur : \url{https://tetragon.io/} (Consulté en 2025).
+
+\bibitem{cilium_web}
+Projet Cilium. \textit{eBPF-based Networking, Observability, Security}. Disponible sur : \url{https://cilium.io/} (Consulté en 2025).
+
+\bibitem{ghane2025observability}
+Ghane, Dr Mehdi. \textit{Observability Engineering Fundamentals}. In : Observability Engineering with Cilium: Observability Magic in the Cloud-Native Journey with Hubble and Tetragon. Berkeley, CA: Apress, Springer, 2025. p. 83-147.
+
+\bibitem{scholz2018performance}
+Scholz, Dominik, et al. \textit{Performance implications of packet filtering with linux ebpf}. In : 2018 30th International Teletraffic Congress (ITC 30). Vol. 1. IEEE, 2018.
+
+\bibitem{vieira2020fast}
+Vieira, Marcos AM, et al. \textit{Fast packet processing with ebpf and xdp: Concepts, code, challenges, and applications}. ACM Computing Surveys (CSUR) 53.1 (2020): 1-36.
+
+\bibitem{gbadamosi2024ebpf}
+Gbadamosi, Bolaji, et al. \textit{The eBPF runtime in the linux kernel}. arXiv preprint arXiv:2410.00026 (2024).
+
+\end{thebibliography}
+
+\label{fin}
+\end{document}
