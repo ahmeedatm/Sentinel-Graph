@@ -146,7 +146,7 @@ Suivez ces étapes pour configurer l'environnement de développement et lancer l
 1. Ouvrez un terminal et placez-vous dans la racine du projet :
 
 ```bash
-cd Architectural-Blueprint-for-eBPF-Graph-Based-Intrusion-Detection
+cd Sentinel-Graph
 ```
 
 2. Lancez le script d'installation (choisissez l'une des options) :

@@ -29,12 +29,22 @@ from typing import Dict, Any, Optional
 from pathlib import Path
 import logging
 
-from graph_model import SystemGraph
-from constants import (
-    EVENT_PROCESS_EXEC, EVENT_PROCESS_EXIT, EVENT_TCP_CONNECT,
-    EVENT_FILE_OPEN, EVENT_FILE_WRITE, EVENT_FILE_READ,
-    EVENT_HANDLERS,
-)
+try:
+    # Package import: from ingestion import EventCollector
+    from .graph_model import SystemGraph
+    from .constants import (
+        EVENT_PROCESS_EXEC, EVENT_PROCESS_EXIT, EVENT_TCP_CONNECT,
+        EVENT_FILE_OPEN, EVENT_FILE_WRITE, EVENT_FILE_READ,
+        EVENT_HANDLERS,
+    )
+except ImportError:
+    # Direct script execution: python3 collector.py
+    from graph_model import SystemGraph  # type: ignore[no-redef]
+    from constants import (  # type: ignore[no-redef]
+        EVENT_PROCESS_EXEC, EVENT_PROCESS_EXIT, EVENT_TCP_CONNECT,
+        EVENT_FILE_OPEN, EVENT_FILE_WRITE, EVENT_FILE_READ,
+        EVENT_HANDLERS,
+    )
 
 # Configuration logging
 logging.basicConfig(
@@ -333,7 +343,7 @@ class EventCollector:
 # Script principal
 # ============================================================================
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     import argparse
     
     parser = argparse.ArgumentParser(description="Tetragon Event Collector")

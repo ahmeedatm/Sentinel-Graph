@@ -35,13 +35,22 @@ from datetime import datetime
 import uuid
 import json
 
-from constants import (
-    NODE_PROCESS, NODE_FILE, NODE_SOCKET,
-    REL_SPAWNS, REL_CONNECTS_TO, REL_MODIFIES, REL_READS, REL_CONTAINS,
-    ATTR_PID, ATTR_PPID, ATTR_COMM, ATTR_UID, ATTR_GID, ATTR_TIMESTAMP,
-    ATTR_POD_NAME, ATTR_NAMESPACE, ATTR_PATH, ATTR_IP, ATTR_PORT,
-    ATTR_PROTOCOL, EDGE_ATTR_TIMESTAMP, EDGE_ATTR_COUNT,
-)
+try:
+    from .constants import (
+        NODE_PROCESS, NODE_FILE, NODE_SOCKET,
+        REL_SPAWNS, REL_CONNECTS_TO, REL_MODIFIES, REL_READS, REL_CONTAINS,
+        ATTR_PID, ATTR_PPID, ATTR_COMM, ATTR_UID, ATTR_GID, ATTR_TIMESTAMP,
+        ATTR_POD_NAME, ATTR_NAMESPACE, ATTR_PATH, ATTR_IP, ATTR_PORT,
+        ATTR_PROTOCOL, EDGE_ATTR_TIMESTAMP, EDGE_ATTR_COUNT,
+    )
+except ImportError:
+    from constants import (  # type: ignore[no-redef]
+        NODE_PROCESS, NODE_FILE, NODE_SOCKET,
+        REL_SPAWNS, REL_CONNECTS_TO, REL_MODIFIES, REL_READS, REL_CONTAINS,
+        ATTR_PID, ATTR_PPID, ATTR_COMM, ATTR_UID, ATTR_GID, ATTR_TIMESTAMP,
+        ATTR_POD_NAME, ATTR_NAMESPACE, ATTR_PATH, ATTR_IP, ATTR_PORT,
+        ATTR_PROTOCOL, EDGE_ATTR_TIMESTAMP, EDGE_ATTR_COUNT,
+    )
 
 
 class SystemGraph:
@@ -109,27 +118,45 @@ class SystemGraph:
         
         return node_id
     
+    def _find_process_by_pid(self, pid: int) -> Optional[str]:
+        """
+        Recherche un nœud processus par PID seul (ignore l'UID).
+        Utilisé pour retrouver un parent existant lors d'un execve.
+
+        Returns:
+            node_id si trouvé, None sinon
+        """
+        for (p, _), node_id in self.processes.items():
+            if p == pid:
+                return node_id
+        return None
+
     def add_process_spawn(self, parent_pid: int, child_pid: int, comm: str,
-                         uid: int, gid: int, 
+                         uid: int, gid: int,
                          pod_name: Optional[str] = None,
                          namespace: Optional[str] = None) -> Tuple[str, str]:
         """
         Enregistre le spawn d'un processus (execve event).
         Crée l'arête SPAWNS entre parent et enfant.
-        
+
         Args:
             parent_pid: PID du processus parent
             child_pid: PID du processus enfant
             comm: Nom du processus enfant
             uid, gid: Propriétaire
             pod_name, namespace: Contexte K8s
-            
+
         Returns:
             (parent_node_id, child_node_id)
         """
-        # Assurer que le parent existe
-        parent_id = self.add_process(parent_pid, None, "unknown", uid, gid, 
-                                     pod_name, namespace)
+        # Chercher le parent par PID (indépendamment de l'UID),
+        # car l'événement execve ne contient que l'UID de l'enfant.
+        existing_parent = self._find_process_by_pid(parent_pid)
+        if existing_parent:
+            parent_id = existing_parent
+        else:
+            parent_id = self.add_process(parent_pid, None, "unknown", uid, gid,
+                                         pod_name, namespace)
         
         # Ajouter l'enfant
         child_id = self.add_process(child_pid, parent_pid, comm, uid, gid,
@@ -225,6 +252,10 @@ class SystemGraph:
             self.graph[proc_id][file_id]["count"] = \
                 self.graph[proc_id][file_id].get("count", 1) + 1
             self.graph[proc_id][file_id]["last_seen"] = datetime.now().isoformat()
+            # Upgrade READ → MODIFIES si l'accès courant est une écriture.
+            # Une écriture est plus informative pour le détecteur.
+            if relation_type == REL_MODIFIES:
+                self.graph[proc_id][file_id]["relation"] = REL_MODIFIES
         else:
             self.graph.add_edge(
                 proc_id, file_id,
@@ -397,6 +428,18 @@ class SystemGraph:
             "statistics": stats,
         }
     
+    def _graph_without_none_attrs(self) -> nx.DiGraph:
+        """
+        Returns a copy of the internal graph with None-valued attributes removed.
+        Required for GEXF and GraphML exports, which do not support None values.
+        """
+        clean = nx.DiGraph()
+        for node_id, data in self.graph.nodes(data=True):
+            clean.add_node(node_id, **{k: v for k, v in data.items() if v is not None})
+        for src, tgt, data in self.graph.edges(data=True):
+            clean.add_edge(src, tgt, **{k: v for k, v in data.items() if v is not None})
+        return clean
+
     def export_graph(self, format: str = "json") -> str:
         """
         Exporte le graphe dans divers formats.
@@ -413,17 +456,20 @@ class SystemGraph:
         
         elif format == "gexf":
             # GEXF = Graph Exchange XML (pour Gephi)
+            # Neither GEXF nor GraphML support None attribute values — build a
+            # clean copy with None-valued attributes stripped out.
+            # lxml (used by networkx) writes bytes, so we use BytesIO.
             import io
-            buf = io.StringIO()
-            nx.write_gexf(self.graph, buf)
-            return buf.getvalue()
-        
+            buf = io.BytesIO()
+            nx.write_gexf(self._graph_without_none_attrs(), buf)
+            return buf.getvalue().decode("utf-8")
+
         elif format == "graphml":
             # GraphML = XML-based graph format
             import io
-            buf = io.StringIO()
-            nx.write_graphml(self.graph, buf)
-            return buf.getvalue()
+            buf = io.BytesIO()
+            nx.write_graphml(self._graph_without_none_attrs(), buf)
+            return buf.getvalue().decode("utf-8")
         
         else:
             raise ValueError(f"Format non supporté: {format}")
@@ -447,7 +493,7 @@ class SystemGraph:
         print(f"{'='*60}\n")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     # Test rapide
     sg = SystemGraph()
     
