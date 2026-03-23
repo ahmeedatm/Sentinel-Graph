@@ -35,7 +35,6 @@ try:
     from .constants import (
         EVENT_PROCESS_EXEC, EVENT_PROCESS_EXIT, EVENT_TCP_CONNECT,
         EVENT_FILE_OPEN, EVENT_FILE_WRITE, EVENT_FILE_READ,
-        EVENT_HANDLERS,
     )
 except ImportError:
     # Direct script execution: python3 collector.py
@@ -43,7 +42,6 @@ except ImportError:
     from constants import (  # type: ignore[no-redef]
         EVENT_PROCESS_EXEC, EVENT_PROCESS_EXIT, EVENT_TCP_CONNECT,
         EVENT_FILE_OPEN, EVENT_FILE_WRITE, EVENT_FILE_READ,
-        EVENT_HANDLERS,
     )
 
 # Configuration logging
