@@ -1,0 +1,142 @@
+// Tetragon gRPC API — définition minimale pour Sentinel-Graph
+// Source: https://github.com/cilium/tetragon/tree/main/api/v1/tetragon
+// Seuls les champs utilisés par le collector sont inclus.
+
+syntax = "proto3";
+package tetragon;
+
+option go_package = "github.com/cilium/tetragon/api/v1/tetragon";
+
+// ============================================================
+// Service
+// ============================================================
+
+service FineGuidanceSensors {
+  // Ouvre un flux d'événements kernel en temps réel
+  rpc GetEvents(GetEventsRequest) returns (stream GetEventsResponse);
+}
+
+// ============================================================
+// Requête
+// ============================================================
+
+message GetEventsRequest {
+  // Filtre optionnel : liste des types d'événements à recevoir
+  // Si vide, tous les événements sont renvoyés
+  repeated EventType allow_list = 2;
+}
+
+enum EventType {
+  UNDEF             = 0;
+  PROCESS_EXEC      = 1;
+  PROCESS_EXIT      = 5;
+  PROCESS_KPROBE    = 9;
+  PROCESS_TRACEPOINT = 10;
+}
+
+// ============================================================
+// Réponse (flux)
+// ============================================================
+
+message GetEventsResponse {
+  oneof event {
+    ProcessExec        process_exec        = 1;
+    ProcessExit        process_exit        = 5;
+    ProcessKprobe      process_kprobe      = 9;
+    ProcessTracepoint  process_tracepoint  = 10;
+  }
+  string node_name  = 20;  // Nom du nœud Kubernetes
+  string cluster_name = 23;
+}
+
+// ============================================================
+// Processus (commun à tous les événements)
+// ============================================================
+
+message Process {
+  string exec_id    = 1;
+  uint32 pid        = 2;
+  uint32 uid        = 3;
+  string binary     = 5;   // Ex: "/bin/bash"
+  string arguments  = 6;
+  Pod    pod        = 10;
+  string parent_exec_id = 12;
+}
+
+message Pod {
+  string namespace = 1;
+  string name      = 2;
+}
+
+// ============================================================
+// Événements
+// ============================================================
+
+// execve — processus lancé
+message ProcessExec {
+  Process process = 1;
+  Process parent  = 2;
+}
+
+// exit — processus terminé
+message ProcessExit {
+  Process process = 1;
+  Process parent  = 2;
+  string  signal  = 3;
+  uint32  status  = 4;
+}
+
+// kprobe — accès fichier ou connexion réseau (fonction kernel hookée)
+message ProcessKprobe {
+  Process             process       = 1;
+  Process             parent        = 2;
+  string              function_name = 3;  // Ex: "tcp_connect", "security_file_open"
+  repeated KprobeArgument args      = 4;
+  string              policy_name   = 7;
+}
+
+message ProcessTracepoint {
+  Process             process = 1;
+  Process             parent  = 2;
+  string              subsys  = 3;
+  string              event   = 4;
+  repeated KprobeArgument args = 5;
+}
+
+// ============================================================
+// Arguments de kprobe
+// ============================================================
+
+message KprobeArgument {
+  oneof arg {
+    string   string_arg = 1;
+    int32    int_arg    = 2;
+    SockArg  sock_arg   = 9;   // Connexion réseau
+    PathArg  path_arg   = 6;   // Chemin fichier
+    FileArg  file_arg   = 7;   // Accès fichier (avec flags)
+  }
+  string label     = 200;   // Nom du paramètre (ex: "fd", "pathname")
+  bool   is_return = 201;
+}
+
+// Argument socket (tcp_connect, etc.)
+message SockArg {
+  string saddr  = 1;  // IP source
+  string daddr  = 2;  // IP destination
+  uint32 sport  = 3;  // Port source
+  uint32 dport  = 4;  // Port destination
+  string proto  = 5;  // "TCP", "UDP"
+  string family = 6;  // "AF_INET", "AF_INET6"
+}
+
+// Argument chemin de fichier
+message PathArg {
+  string path = 1;
+}
+
+// Argument fichier avec permissions
+message FileArg {
+  string path       = 1;
+  uint32 flags      = 2;
+  uint32 permission = 3;
+}

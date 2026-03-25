@@ -110,6 +110,30 @@ install_requirements() {
     fi
 }
 
+generate_grpc_stubs() {
+    print_step "Generating gRPC stubs from Tetragon proto..."
+
+    local proto_dir="$SCRIPT_DIR/src/ingestion/proto"
+    local proto_file="$proto_dir/tetragon.proto"
+
+    if [ ! -f "$proto_file" ]; then
+        print_error "Proto file not found: $proto_file"
+        return
+    fi
+
+    python -m grpc_tools.protoc \
+        -I "$proto_dir" \
+        --python_out="$proto_dir" \
+        --grpc_python_out="$proto_dir" \
+        "$proto_file" 2>&1
+
+    if [ $? -eq 0 ]; then
+        print_success "gRPC stubs generated in $proto_dir"
+    else
+        print_error "Failed to generate gRPC stubs"
+    fi
+}
+
 create_env_file() {
     print_step "Creating .env configuration file..."
     
@@ -122,6 +146,7 @@ create_env_file() {
 # Tetragon Configuration
 TETRAGON_NAMESPACE=tetragon
 TETRAGON_POD_SELECTOR=app=tetragon
+TETRAGON_GRPC_ADDRESS=localhost:54321
 
 # Kubernetes Configuration
 KUBECONFIG=${HOME}/.kube/config
@@ -204,6 +229,7 @@ main() {
     activate_venv
     upgrade_pip
     install_requirements
+    generate_grpc_stubs
     create_env_file
     create_directories
     display_summary
