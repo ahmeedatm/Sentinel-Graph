@@ -78,6 +78,28 @@ def normalize(tetragon_event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 # ============================================================================
 # Normaliseurs par type
+import base64
+
+def _get_pid_fallback(process_dict: dict, exec_id_key: str = "execId") -> Optional[int]:
+    if not process_dict:
+        return None
+    pid = process_dict.get("pid")
+    if isinstance(pid, dict):
+        pid = pid.get("value")
+    if pid is not None:
+        try:
+            return int(pid)
+        except (ValueError, TypeError):
+            pass
+    exec_id = process_dict.get(exec_id_key)
+    if exec_id:
+        try:
+            # Format usuel: nodename:timestamp:pid
+            return int(base64.b64decode(exec_id).decode('utf-8').split(':')[-1])
+        except Exception:
+            pass
+    return None
+
 # ============================================================================
 
 def _normalize_process_exec(event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -92,8 +114,8 @@ def _normalize_process_exec(event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     process = exec_data.get("process", {})
     parent = exec_data.get("parent", {})
 
-    pid = _to_int(process.get("pid"))
-    parent_pid = _to_int(parent.get("pid"))
+    pid = _get_pid_fallback(process)
+    parent_pid = _get_pid_fallback(parent) or _get_pid_fallback(process, "parentExecId")
 
     if pid is None or parent_pid is None:
         logger.warning("processExec: pid ou parent_pid manquant — %s", event)
@@ -120,7 +142,7 @@ def _normalize_process_exit(event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     exit_data = event.get("processExit", {})
     process = exit_data.get("process", {})
 
-    pid = _to_int(process.get("pid"))
+    pid = _get_pid_fallback(process)
     if pid is None:
         logger.warning("processExit: pid manquant — %s", event)
         return None
@@ -143,7 +165,7 @@ def _normalize_process_kprobe(event: Dict[str, Any]) -> Optional[Dict[str, Any]]
     process = kprobe.get("process", {})
     args = kprobe.get("args", [])
 
-    pid = _to_int(process.get("pid"))
+    pid = _get_pid_fallback(process)
     uid = _to_int(process.get("uid"), default=0)
 
     if pid is None:

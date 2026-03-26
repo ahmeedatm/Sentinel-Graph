@@ -20,6 +20,7 @@ helm upgrade --install tetragon cilium/tetragon -n kube-system \
   --set tetragon.observer.grpcPort=50051
 
 echo "--- 3. Attente du demarrage de Tetragon ---"
+sleep 5
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=tetragon -n kube-system --timeout=120s
 
 echo "--- 4. Application des politiques eBPF ---"

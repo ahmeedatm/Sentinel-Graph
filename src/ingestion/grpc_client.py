@@ -159,7 +159,6 @@ class TetragonGRPCClient:
             event_dict = MessageToDict(
                 response,
                 preserving_proto_field_name=False,  # camelCase (défaut MessageToDict)
-                including_default_value_fields=False,
             )
             return normalize(event_dict)
         except Exception as exc:
