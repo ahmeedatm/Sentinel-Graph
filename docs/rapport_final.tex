@@ -376,6 +376,18 @@ La résilience est garantie aujourd'hui par la capture explicite en fermeture lo
 
 Le tableau de bord permet aujourd'hui d'observer en "Live" l'échafaudage de l'arbre comportemental et l'accumulation chronologique des alertes à un rythme inatteignable par une analyse statique standard, achevant ainsi parfaitement les spécifications du cahier des charges.
 
+\subsection{Scénarios Offensifs et Prestation Red Team}
+
+Afin d'éprouver scientifiquement la plateforme face à une situation de crise réelle (Zero-Day exploit), nous avons développé une suite d'ingénierie offensive (\textit{Red Team Suite}). Un conteneur Alpine inhérent au cluster (qualifié de "Patient Zéro", considéré comme inoffensif par la Baseline) a été sciemment infecté par injection asynchrone pour muter son comportement.
+
+Deux vecteurs d'attaques majeurs ont été instrumentés et contrés victorieusement par Sentinel-Graph :
+\begin{enumerate}
+    \item \textbf{Exploitation via Reverse Shell (\texttt{reverse\_shell.sh})} : Le payload dissimule le téléchargement d'un \textit{netcat} alpin via une sous-commande \texttt{sh -c}, initiant un tunnel furtif (\texttt{nc -zvw1}) vers l'extérieur. Le système eBPF a capturé le \textit{fork} non prévu de la racine \texttt{sh}, soulevant une alerte immédiate \texttt{UNKNOWN\_PROCESS} assortie de flag \texttt{UNEXPECTED\_CONNECTION}.
+    \item \textbf{Exploration et Exfiltration (\texttt{exfiltration.sh})} : En combinant une lecture interdite des secrets noyaux (\texttt{cat /etc/shadow}) et la compromission d'un transfert sécurisé (\texttt{curl -X POST}), le graphe comportemental causal s'est mathématiquement distancié des heuristiques habituelles.
+\end{enumerate}
+
+Le succès fulgurant de ces deux expériences simulées au cœur de Kubernetes prouve de manière indéniable qu'une anomalie sémantique, même maquillée et transitoire, déclenche infailliblement une "secousse" dans l'arbre d'exécution, instantanément répertoriée par la solution étudiée.
+
 \section{Conclusion}
 
 Ce projet a permis d'inaugurer, d'instrumenter et de valider techniquement la sur-efficience de la technologie eBPF confrontée à l'analyse algorithmique des graphes. Grâce à Tetragon et sa capacité d'interception à la source et sans compromission de la couche utilisateur, le pipeline ingère et modélise en un éclair des données intouchables par des mécanismes historiques.

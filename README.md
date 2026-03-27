@@ -172,22 +172,30 @@ Il lance le tunnel gRPC de K8s en arrière-plan et démarre Streamlit pour vous 
 ```
 > 💡 *Note: Lorsque vous quitterez Streamlit (Ctrl+C), le script s'occupera de tuer proprement le tunnel de port-forwarding en arrière-plan.*
 
-### Étape 3 : Simulation d'une attaque (Terminal Séparé)
-Pendant que votre Dashboard tourne, ouvrez un nouveau terminal pour injecter du trafic dans le cluster et voir la magie opérer en temps réel !
+### Étape 3 : 🏴‍☠️ Simulation d'Attaques (Red Team)
+Pendant que votre Dashboard tourne, ouvrez un nouveau terminal pour injecter une attaque structurée dans le cluster et voir la magie eBPF opérer !
 
-1. Lancez un pod Alpine éphémère :
+1. Instanciez un pod "Patient Zéro" qui tourne en tâche de fond :
    ```bash
-   kubectl run shell-test -it --rm --image=alpine -- sh
+   kubectl run victime-pod -it --rm --image=alpine -- sh
    ```
-2. Installez `curl` (Témoin de création de processus/fichiers eBPF) :
+2. Ouvrez un troisième terminal, et injectez l'une de nos attaques préparées dans ce pod !
+   
+   **Attaque 1 (Reverse Shell) :** 
+   *Déclenche un appel système execve atypique couplé à un tcp_connect non répertorié.*
    ```bash
-   apk add curl
+   kubectl cp red_team/attacks/reverse_shell.sh victime-pod:/tmp/reverse_shell.sh
+   kubectl exec victime-pod -- sh /tmp/reverse_shell.sh
    ```
-3. Générez des connexions TCP :
+
+   **Attaque 2 (Exfiltration de Données) :** 
+   *Déclenche un openat (lecture de la configuration /etc/) suivi d'un transfert curl.*
    ```bash
-   curl https://google.com
+   kubectl cp red_team/attacks/exfiltration.sh victime-pod:/tmp/exfiltration.sh
+   kubectl exec victime-pod -- sh /tmp/exfiltration.sh
    ```
-4. Observez le dashboard Sentinel-Graph s'animer ! 🚀
+
+4. Observez le dashboard Sentinel-Graph s'animer ! Les anomalies liées aux comportements Zero-Day remonteront instantanément dans le tableau de droite avec le flag `UNKNOWN_PROCESS`. 🚀
 
 ### Méthode Manuelle (Configuration Historique)
 Si vous souhaitez observer les composants séparément, divisez votre écran en 2 terminaux :
