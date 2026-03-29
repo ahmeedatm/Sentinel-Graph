@@ -1,0 +1,164 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 600px;
+                 background-color: #1e293b;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#ef4444", "font": {"color": "white"}, "id": "proc_2641_0_b4f6940b", "label": "proc_2641_0_b4f6940b", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_2641_0_b4f6940b\npid: 2641\nparent_pid: None\ncomm: \u003cunknown_pid_2641\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:05:47.189116\npod_name: None\nnamespace: None"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "socket_4fd025434253", "label": "socket_4fd025434253", "shape": "dot", "size": 25, "title": "Type: socket\nID: socket_4fd025434253\nip: SOCK_STREAM\nport: 0\nprotocol: TCP\ntimestamp: 2026-03-27T12:05:47.189273"}, {"color": "#6b7280", "font": {"color": "white"}, "id": "proc_1738_0_6472b87a", "label": "proc_1738_0_6472b87a", "shape": "dot", "size": 15, "title": "Type: process\nID: proc_1738_0_6472b87a\npid: 1738\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:06:03.196148\npod_name: kube-proxy-nkp5j\nnamespace: kube-system"}, {"color": "#6b7280", "font": {"color": "white"}, "id": "proc_1_0_d40bbe01", "label": "proc_1_0_d40bbe01", "shape": "dot", "size": 15, "title": "Type: process\nID: proc_1_0_d40bbe01\npid: 1\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:06:27.193088\npod_name: None\nnamespace: None"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8097_0_ff1c6240", "label": "proc_8097_0_ff1c6240", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8097_0_ff1c6240\npid: 8097\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:06:35.192696\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8103_0_80250827", "label": "proc_8103_0_80250827", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8103_0_80250827\npid: 8103\nparent_pid: 8097\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:06:35.192733\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8099_0_1edf117e", "label": "proc_8099_0_1edf117e", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8099_0_1edf117e\npid: 8099\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:06:35.193096\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8104_0_7f897b58", "label": "proc_8104_0_7f897b58", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8104_0_7f897b58\npid: 8104\nparent_pid: 8099\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:06:35.193171\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8092_0_651e2c92", "label": "proc_8092_0_651e2c92", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8092_0_651e2c92\npid: 8092\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:06:35.193444\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8105_0_55491e39", "label": "proc_8105_0_55491e39", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8105_0_55491e39\npid: 8105\nparent_pid: 8092\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:06:35.193464\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8101_0_98af4000", "label": "proc_8101_0_98af4000", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8101_0_98af4000\npid: 8101\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:06:35.193767\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8106_0_521e1d7d", "label": "proc_8106_0_521e1d7d", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8106_0_521e1d7d\npid: 8106\nparent_pid: 8101\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:06:35.193913\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8113_0_e9450ce1", "label": "proc_8113_0_e9450ce1", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8113_0_e9450ce1\npid: 8113\nparent_pid: 8101\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:07:35.231694\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8114_0_a9b95662", "label": "proc_8114_0_a9b95662", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8114_0_a9b95662\npid: 8114\nparent_pid: 8101\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:07:35.234392\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8109_0_44e035e8", "label": "proc_8109_0_44e035e8", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8109_0_44e035e8\npid: 8109\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:07:35.239733\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8115_0_64d82d32", "label": "proc_8115_0_64d82d32", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8115_0_64d82d32\npid: 8115\nparent_pid: 8109\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:07:35.239765\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8116_0_b3d1f654", "label": "proc_8116_0_b3d1f654", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8116_0_b3d1f654\npid: 8116\nparent_pid: 8101\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:07:35.244180\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8159_0_ddebef91", "label": "proc_8159_0_ddebef91", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8159_0_ddebef91\npid: 8159\nparent_pid: 8151\ncomm: containerd-shim-runc-v2\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:07:37.955831\npod_name: None\nnamespace: None"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8208_0_6972d3ee", "label": "proc_8208_0_6972d3ee", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8208_0_6972d3ee\npid: 8208\nparent_pid: 8159\ncomm: sh\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:07:39.199512\npod_name: victime-pod\nnamespace: default"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8183_0_74a1fb19", "label": "proc_8183_0_74a1fb19", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8183_0_74a1fb19\npid: 8183\nparent_pid: 8159\ncomm: pause\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:08:07.198085\npod_name: None\nnamespace: None"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8228_0_dfe28da9", "label": "proc_8228_0_dfe28da9", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8228_0_dfe28da9\npid: 8228\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:08:35.232893\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8229_0_01e0cae5", "label": "proc_8229_0_01e0cae5", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8229_0_01e0cae5\npid: 8229\nparent_pid: 8228\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:08:35.232962\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8225_0_21743f98", "label": "proc_8225_0_21743f98", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8225_0_21743f98\npid: 8225\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:08:35.237186\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8230_0_7e669d9b", "label": "proc_8230_0_7e669d9b", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8230_0_7e669d9b\npid: 8230\nparent_pid: 8225\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:08:35.237234\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8226_0_eb801a56", "label": "proc_8226_0_eb801a56", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8226_0_eb801a56\npid: 8226\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:08:35.238508\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8231_0_22ad1621", "label": "proc_8231_0_22ad1621", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8231_0_22ad1621\npid: 8231\nparent_pid: 8226\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:08:35.238549\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8232_0_9ea4af67", "label": "proc_8232_0_9ea4af67", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8232_0_9ea4af67\npid: 8232\nparent_pid: 8225\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:08:35.239715\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8276_0_4243c17d", "label": "proc_8276_0_4243c17d", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8276_0_4243c17d\npid: 8276\nparent_pid: 8225\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:09:35.200418\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8275_0_3309e5e8", "label": "proc_8275_0_3309e5e8", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8275_0_3309e5e8\npid: 8275\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:09:35.202059\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8277_0_a2b53785", "label": "proc_8277_0_a2b53785", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8277_0_a2b53785\npid: 8277\nparent_pid: 8275\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:09:35.202084\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8278_0_2c0410ab", "label": "proc_8278_0_2c0410ab", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8278_0_2c0410ab\npid: 8278\nparent_pid: 8225\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:09:35.204322\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8279_0_84a3b71c", "label": "proc_8279_0_84a3b71c", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8279_0_84a3b71c\npid: 8279\nparent_pid: 8226\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:09:35.206100\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8390_0_1c573d11", "label": "proc_8390_0_1c573d11", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8390_0_1c573d11\npid: 8390\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:10:06.053980\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8404_0_c5935d41", "label": "proc_8404_0_c5935d41", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8404_0_c5935d41\npid: 8404\nparent_pid: 8390\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:10:06.053998\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8342_0_3d66ea93", "label": "proc_8342_0_3d66ea93", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8342_0_3d66ea93\npid: 8342\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:10:35.199678\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8402_0_0f814dc6", "label": "proc_8402_0_0f814dc6", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8402_0_0f814dc6\npid: 8402\nparent_pid: 8342\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:10:35.199733\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8403_0_104a81f2", "label": "proc_8403_0_104a81f2", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8403_0_104a81f2\npid: 8403\nparent_pid: 8342\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:10:35.199941\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8400_0_28ca6086", "label": "proc_8400_0_28ca6086", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8400_0_28ca6086\npid: 8400\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:10:35.200256\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8405_0_3639cf57", "label": "proc_8405_0_3639cf57", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8405_0_3639cf57\npid: 8405\nparent_pid: 8400\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:10:35.200330\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8409_0_70c11cf0", "label": "proc_8409_0_70c11cf0", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8409_0_70c11cf0\npid: 8409\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:11:35.200583\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8412_0_25b41041", "label": "proc_8412_0_25b41041", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8412_0_25b41041\npid: 8412\nparent_pid: 8409\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:11:35.200620\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8413_0_42e6ebf8", "label": "proc_8413_0_42e6ebf8", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8413_0_42e6ebf8\npid: 8413\nparent_pid: 8409\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:11:35.200973\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8401_0_1a58dd84", "label": "proc_8401_0_1a58dd84", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8401_0_1a58dd84\npid: 8401\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:11:35.201525\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8414_0_53431b74", "label": "proc_8414_0_53431b74", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8414_0_53431b74\npid: 8414\nparent_pid: 8401\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:11:35.201583\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#ef4444", "font": {"color": "white"}, "id": "proc_8415_0_fa2d7ed8", "label": "proc_8415_0_fa2d7ed8", "shape": "dot", "size": 25, "title": "Type: process\nID: proc_8415_0_fa2d7ed8\npid: 8415\nparent_pid: 8400\ncomm: iptables\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:11:35.201865\npod_name: kindnet-9qnf2\nnamespace: kube-system"}, {"color": "#6b7280", "font": {"color": "white"}, "id": "proc_140_0_bec435a7", "label": "proc_140_0_bec435a7", "shape": "dot", "size": 15, "title": "Type: process\nID: proc_140_0_bec435a7\npid: 140\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:11:37.204663\npod_name: None\nnamespace: None"}, {"color": "#6b7280", "font": {"color": "white"}, "id": "proc_4344_0_e454c501", "label": "proc_4344_0_e454c501", "shape": "dot", "size": 15, "title": "Type: process\nID: proc_4344_0_e454c501\npid: 4344\nparent_pid: None\ncomm: \u003cunknown_parent\u003e\nuid: 0\ngid: 0\ntimestamp: 2026-03-27T12:11:37.210173\npod_name: None\nnamespace: None"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "#ef4444", "from": "proc_2641_0_b4f6940b", "label": "CONNECTS_TO", "title": "CONNECTS_TO", "to": "socket_4fd025434253"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8097_0_ff1c6240", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8103_0_80250827"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8099_0_1edf117e", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8104_0_7f897b58"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8092_0_651e2c92", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8105_0_55491e39"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8101_0_98af4000", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8106_0_521e1d7d"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8101_0_98af4000", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8113_0_e9450ce1"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8101_0_98af4000", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8114_0_a9b95662"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8101_0_98af4000", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8116_0_b3d1f654"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8109_0_44e035e8", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8115_0_64d82d32"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8159_0_ddebef91", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8208_0_6972d3ee"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8159_0_ddebef91", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8183_0_74a1fb19"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8228_0_dfe28da9", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8229_0_01e0cae5"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8225_0_21743f98", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8230_0_7e669d9b"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8225_0_21743f98", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8232_0_9ea4af67"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8225_0_21743f98", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8276_0_4243c17d"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8225_0_21743f98", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8278_0_2c0410ab"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8226_0_eb801a56", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8231_0_22ad1621"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8226_0_eb801a56", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8279_0_84a3b71c"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8275_0_3309e5e8", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8277_0_a2b53785"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8390_0_1c573d11", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8404_0_c5935d41"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8342_0_3d66ea93", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8402_0_0f814dc6"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8342_0_3d66ea93", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8403_0_104a81f2"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8400_0_28ca6086", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8405_0_3639cf57"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8400_0_28ca6086", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8415_0_fa2d7ed8"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8409_0_70c11cf0", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8412_0_25b41041"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8409_0_70c11cf0", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8413_0_42e6ebf8"}, {"arrows": "to", "color": "#ef4444", "from": "proc_8401_0_1a58dd84", "label": "SPAWNS", "title": "SPAWNS", "to": "proc_8414_0_53431b74"}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "forceAtlas2Based": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.01,
+            "damping": 0.4,
+            "gravitationalConstant": -50,
+            "springConstant": 0.08,
+            "springLength": 100
+        },
+        "solver": "forceAtlas2Based",
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

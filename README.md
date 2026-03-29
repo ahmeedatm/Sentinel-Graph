@@ -147,71 +147,66 @@ Permet de :
 
 ## 📋 Configuration Requise
 
-- **OS** : Linux (support eBPF natif)
-- **Orchestration** : Kubernetes (Kind, Minikube ou cluster production)
-- **Dépendances Python** : voir [requirement.txt](requirement.txt)
-- **eBPF Programs** : Tetragon (v1.0+)
+- **OS** : Mac (avec Docker/Kind) ou Linux (support eBPF natif)
+- **Orchestration** : Kubernetes (Kind) pour le test local
+- **Dépendances Python** : voir `requirement.txt`
+- **eBPF Agent** : Tetragon
 
-## ⚡ Quick Start — Mise en route rapide
+## ⚡ Quick Start — Déploiement et Test Rapide
 
-Suivez ces étapes pour configurer l'environnement de développement et lancer le tableau de bord.
+L'architecture nécessite de connecter votre environnement local Python avec le cluster Kubernetes contenant Tetragon.
 
-1. Ouvrez un terminal et placez-vous dans la racine du projet :
-
-```bash
-cd Sentinel-Graph
-```
-
-2. Lancez le script d'installation (choisissez l'une des options) :
+### Étape 1 : Initialisation de l'Infrastructure (Une seule fois)
+Si votre cluster n'est pas encore créé, lancez le script d'installation infrastructure. Cela construira le cluster `kind` et installera la chart Helm de Tetragon.
 
 ```bash
-bash setup.sh
+bash infra/tetragon/install.sh
 ```
 
-3. Activez l'environnement virtuel :
+### Étape 2 : Lancement Automatisé (La méthode Recommandée) ⭐
+Pour éviter de manipuler 3 terminaux (un pour le port-forwarding, un pour Streamlit, un pour les tests), **un script tout-en-un a été créé**. 
+Il lance le tunnel gRPC de K8s en arrière-plan et démarre Streamlit pour vous :
 
 ```bash
-source venv/bin/activate
+./start.sh
 ```
+> 💡 *Note: Lorsque vous quitterez Streamlit (Ctrl+C), le script s'occupera de tuer proprement le tunnel de port-forwarding en arrière-plan.*
 
-4. Vérifiez rapidement l'installation :
+### Étape 3 : 🏴‍☠️ Simulation d'Attaques (Red Team)
+Pendant que votre Dashboard tourne, ouvrez un nouveau terminal pour injecter une attaque structurée dans le cluster et voir la magie eBPF opérer !
 
+1. Instanciez un pod "Patient Zéro" qui tourne en tâche de fond :
+   ```bash
+   kubectl run victime-pod -it --rm --image=alpine -- sh
+   ```
+2. Ouvrez un troisième terminal, et injectez l'une de nos attaques préparées dans ce pod !
+   
+   **Attaque 1 (Reverse Shell) :** 
+   *Déclenche un appel système execve atypique couplé à un tcp_connect non répertorié.*
+   ```bash
+   kubectl cp red_team/attacks/reverse_shell.sh victime-pod:/tmp/reverse_shell.sh
+   kubectl exec victime-pod -- sh /tmp/reverse_shell.sh
+   ```
+
+   **Attaque 2 (Exfiltration de Données) :** 
+   *Déclenche un openat (lecture de la configuration /etc/) suivi d'un transfert curl.*
+   ```bash
+   kubectl cp red_team/attacks/exfiltration.sh victime-pod:/tmp/exfiltration.sh
+   kubectl exec victime-pod -- sh /tmp/exfiltration.sh
+   ```
+
+4. Observez le dashboard Sentinel-Graph s'animer ! Les anomalies liées aux comportements Zero-Day remonteront instantanément dans le tableau de droite avec le flag `UNKNOWN_PROCESS`. 🚀
+
+### Méthode Manuelle (Configuration Historique)
+Si vous souhaitez observer les composants séparément, divisez votre écran en 2 terminaux :
+**Terminal A (Connexion K8s) :**
 ```bash
-python -c "import streamlit, networkx, pandas; print('✓ Setup OK')"
+kubectl port-forward -n kube-system ds/tetragon 54321:54321
 ```
-
-5. Démarrez le tableau de bord :
-
+**Terminal B (Lancement applicatif) :**
 ```bash
 streamlit run dashboard/app.py
 ```
-
-6. (Optionnel) Vérifiez le moteur d'analyse :
-
-```bash
-python3 -c "
-import sys; sys.path.insert(0, 'src')
-from ingestion import EventCollector
-from analysis import BaselineLearner, AnomalyDetector
-
-c = EventCollector()
-c.process_json_file('src/ingestion/dummy_logs.json')
-snapshot = c.graph.get_graph_snapshot()
-
-learner = BaselineLearner()
-learner.learn(snapshot)
-learner.save('src/analysis/storage/baseline.json')
-
-detector = AnomalyDetector(learner)
-alerts = detector.detect(snapshot)
-print('Baseline ready:', learner.is_ready())
-print('Alerts on known traffic:', len(alerts))   # attendu : 0
-"
-```
-
-Remarques :
-- Le fichier `.env` est généré automatiquement par le script et contient les variables de configuration (port du dashboard, chemins de stockage, etc.).
-- Si `venv/`, `data/`, `models/` ou `logs/` existent localement et que vous voulez tout reprendre à zéro, supprimez `venv/` puis relancez le script d'installation.
 
 
 ## 🧪 Tests

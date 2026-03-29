@@ -28,6 +28,7 @@ import sys
 from typing import Dict, Any, Optional
 from pathlib import Path
 import logging
+import os
 
 try:
     # Package import: from ingestion import EventCollector
@@ -35,16 +36,16 @@ try:
     from .constants import (
         EVENT_PROCESS_EXEC, EVENT_PROCESS_EXIT, EVENT_TCP_CONNECT,
         EVENT_FILE_OPEN, EVENT_FILE_WRITE, EVENT_FILE_READ,
-        EVENT_HANDLERS,
     )
+    from .grpc_client import TetragonGRPCClient
 except ImportError:
     # Direct script execution: python3 collector.py
     from graph_model import SystemGraph  # type: ignore[no-redef]
     from constants import (  # type: ignore[no-redef]
         EVENT_PROCESS_EXEC, EVENT_PROCESS_EXIT, EVENT_TCP_CONNECT,
         EVENT_FILE_OPEN, EVENT_FILE_WRITE, EVENT_FILE_READ,
-        EVENT_HANDLERS,
     )
+    from grpc_client import TetragonGRPCClient  # type: ignore[no-redef]
 
 # Configuration logging
 logging.basicConfig(
@@ -330,6 +331,48 @@ class EventCollector:
         logger.info(f"Processing complete. Events: {self.event_count}, Errors: {self.error_count}")
         return self.event_count
     
+    def process_grpc_stream(self, address: Optional[str] = None) -> int:
+        """
+        Se connecte au serveur gRPC Tetragon et traite le flux d'événements
+        en temps réel jusqu'à l'interruption (Ctrl+C) ou une erreur réseau.
+
+        Les événements sont reçus sous forme de messages protobuf, convertis
+        au format interne par TetragonGRPCClient + tetragon_adapter, puis
+        dispatchés vers SystemGraph exactement comme process_json_file().
+
+        Args:
+            address: Adresse gRPC du serveur Tetragon, ex: "localhost:54321".
+                     Si None, utilise la variable d'env TETRAGON_GRPC_ADDRESS
+                     ou "localhost:54321" par défaut.
+
+        Returns:
+            Nombre d'événements traités avec succès.
+        """
+        grpc_address = (
+            address
+            or os.environ.get("TETRAGON_GRPC_ADDRESS", "localhost:54321")
+        )
+
+        logger.info("Démarrage du streaming gRPC depuis %s", grpc_address)
+
+        try:
+            with TetragonGRPCClient(grpc_address) as client:
+                for event in client.stream_events():
+                    if self.dispatch_event(event):
+                        self.event_count += 1
+        except KeyboardInterrupt:
+            logger.info("Streaming interrompu par l'utilisateur (Ctrl+C)")
+        except Exception as exc:
+            logger.error("Erreur gRPC: %s", exc)
+            self.error_count += 1
+
+        logger.info(
+            "Streaming terminé. Événements: %d, Erreurs: %d",
+            self.event_count,
+            self.error_count,
+        )
+        return self.event_count
+
     def get_statistics(self) -> Dict[str, Any]:
         """Retourne les statistiques de collecte."""
         return {
@@ -348,21 +391,27 @@ if __name__ == "__main__":  # pragma: no cover
     
     parser = argparse.ArgumentParser(description="Tetragon Event Collector")
     parser.add_argument("--input", type=str, help="JSON input file (default: stdin)")
+    parser.add_argument("--grpc", action="store_true",
+                        help="Streaming gRPC depuis Tetragon (remplace --input/stdin)")
+    parser.add_argument("--grpc-address", type=str, default=None,
+                        help="Adresse du serveur gRPC Tetragon (défaut: $TETRAGON_GRPC_ADDRESS ou localhost:54321)")
     parser.add_argument("--output", type=str, help="Output file for graph snapshot (JSON)")
-    parser.add_argument("--format", choices=["json", "gexf", "graphml"], 
-                       default="json", help="Graph export format")
+    parser.add_argument("--format", choices=["json", "gexf", "graphml"],
+                        default="json", help="Graph export format")
     parser.add_argument("--verbose", action="store_true", help="Verbose logging")
-    
+
     args = parser.parse_args()
-    
+
     if args.verbose:
         logger.setLevel(logging.DEBUG)
-    
+
     # Créer le collecteur
     collector = EventCollector()
-    
+
     # Traiter les événements
-    if args.input:
+    if args.grpc:
+        collector.process_grpc_stream(address=args.grpc_address)
+    elif args.input:
         collector.process_json_file(args.input)
     else:
         collector.process_stdin()
